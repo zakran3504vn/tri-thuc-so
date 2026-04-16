@@ -42,9 +42,9 @@ export default function SubjectGrid() {
         const counts: Record<number, { lessons: number; exercises: number; tests: number }> = {};
         for (const subject of subjectsData) {
           const [lessons, exercises, tests] = await Promise.all([
-            fetch(`http://localhost:5931/api/lessons?subject_id=${subject.id}`).then(res => res.json()),
-            fetch(`http://localhost:5931/api/exercises?subject_id=${subject.id}`).then(res => res.json()),
-            fetch(`http://localhost:5931/api/tests?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/lessons?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/exercises?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/tests?subject_id=${subject.id}`).then(res => res.json()),
           ]);
           counts[subject.id] = {
             lessons: lessons.length || 0,
@@ -110,7 +110,7 @@ export default function SubjectGrid() {
                   <div className={`relative ${imageHeightClass} overflow-hidden bg-gray-100 flex items-center justify-center`}>
                     <img 
                       src={!imageErrors[s.id] && s.thumbnail 
-                        ? (s.thumbnail.startsWith('http') ? s.thumbnail : `http://localhost:5931${s.thumbnail}`)
+                        ? (s.thumbnail.startsWith('http') ? s.thumbnail : `https://backend.khotrithucso.vn${s.thumbnail}`)
                         : info.img
                       } 
                       alt={s.title} 

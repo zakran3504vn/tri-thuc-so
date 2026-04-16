@@ -48,7 +48,7 @@ export default function NewsSection() {
               <Link href={`/thong-bao/${news[0].slug}`} className="group block cursor-pointer">
                 <div className="relative overflow-hidden rounded-2xl h-64">
                   <img 
-                    src={news[0].image_url ? (news[0].image_url.startsWith('http') ? news[0].image_url : `http://localhost:5931${news[0].image_url}`) : 'https://readdy.ai/api/search-image?query=education%20news%20banner%20blue%20gradient%20abstract%20modern%20clean&width=800&height=400&seq=news&orientation=landscape'} 
+                    src={news[0].image_url ? (news[0].image_url.startsWith('http') ? news[0].image_url : `https://backend.khotrithucso.vn${news[0].image_url}`) : 'https://readdy.ai/api/search-image?query=education%20news%20banner%20blue%20gradient%20abstract%20modern%20clean&width=800&height=400&seq=news&orientation=landscape'} 
                     alt={news[0].title} 
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" 
                   />
@@ -68,7 +68,7 @@ export default function NewsSection() {
             {news.slice(1).map((item) => (
               <Link key={item.id} href={`/thong-bao/${item.slug}`} className="group flex gap-4 bg-gray-50 hover:bg-blue-50 rounded-2xl p-4 transition-colors duration-200 cursor-pointer">
                 <img 
-                  src={item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`) : 'https://readdy.ai/api/search-image?query=education%20icon%20blue%20simple%20minimal&width=96&height=80&seq=newsicon&orientation=landscape'} 
+                  src={item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `https://backend.khotrithucso.vn${item.image_url}`) : 'https://readdy.ai/api/search-image?query=education%20icon%20blue%20simple%20minimal&width=96&height=80&seq=newsicon&orientation=landscape'} 
                   alt={item.title} 
                   className="w-24 h-20 object-cover object-top rounded-xl flex-shrink-0" 
                 />

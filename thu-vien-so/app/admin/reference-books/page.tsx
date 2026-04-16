@@ -43,7 +43,7 @@ export default function AdminReferenceBooks() {
     try {
       const [booksData, subjectsData] = await Promise.all([
         getReferenceBooks(),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api'}/subjects`).then(res => res.json())
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.khotrithucso.vn/api'}/subjects`).then(res => res.json())
       ]);
       setBooks(booksData);
       setSubjects(subjectsData);
@@ -85,7 +85,7 @@ export default function AdminReferenceBooks() {
     setFileUrl(item.file_url);
     setSelectedFile(null);
     setCoverImage(item.cover_image || '');
-    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`) : '');
+    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `https://backend.khotrithucso.vn${item.cover_image}`) : '');
     setSelectedCoverFile(null);
     setIsFeatured(item.is_featured || false);
     setSubmitMessage('');
@@ -306,7 +306,7 @@ export default function AdminReferenceBooks() {
                     <p className="text-xs text-gray-500 truncate">{fileUrl}</p>
                   </div>
                   <a
-                    href={fileUrl.startsWith('http') ? fileUrl : `http://localhost:5931${fileUrl}`}
+                    href={fileUrl.startsWith('http') ? fileUrl : `https://backend.khotrithucso.vn${fileUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 cursor-pointer"
@@ -441,7 +441,7 @@ export default function AdminReferenceBooks() {
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   {item.cover_image && (
                     <div className="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
+                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `https://backend.khotrithucso.vn${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -473,7 +473,7 @@ export default function AdminReferenceBooks() {
                   </div>
                   <div className="flex items-center gap-2">
                     <a
-                      href={item.file_url.startsWith('http') ? item.file_url : `http://localhost:5931${item.file_url}`}
+                      href={item.file_url.startsWith('http') ? item.file_url : `https://backend.khotrithucso.vn${item.file_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer"

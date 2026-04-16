@@ -57,16 +57,16 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
       try {
         setLoading(true);
         // Fetch subject by slug
-        const response = await fetch(`http://localhost:5931/api/subjects/slug/${subjectId}`);
+        const response = await fetch(`https://backend.khotrithucso.vn/api/subjects/slug/${subjectId}`);
         if (response.ok) {
           const matchedSubject = await response.json();
           setSubject(matchedSubject);
           // Fetch lessons, exercises, tests, and soft books for this subject
           const [lessonsData, exercisesData, testsData, softBooksData] = await Promise.all([
-            fetch(`http://localhost:5931/api/lessons?subject_id=${matchedSubject.id}`).then(res => res.json()),
-            fetch(`http://localhost:5931/api/exercises?subject_id=${matchedSubject.id}`).then(res => res.json()),
-            fetch(`http://localhost:5931/api/tests?subject_id=${matchedSubject.id}`).then(res => res.json()),
-            fetch(`http://localhost:5931/api/soft-books?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/lessons?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/exercises?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/tests?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`https://backend.khotrithucso.vn/api/soft-books?subject_id=${matchedSubject.id}`).then(res => res.json()),
           ]);
           setLessons(lessonsData);
           setExercises(exercisesData);
@@ -181,7 +181,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     <div className="relative h-48 overflow-hidden">
                       {lesson.thumbnail ? (
                         <img 
-                          src={lesson.thumbnail.startsWith('http') ? lesson.thumbnail : `http://localhost:5931${lesson.thumbnail}`} 
+                          src={lesson.thumbnail.startsWith('http') ? lesson.thumbnail : `https://backend.khotrithucso.vn${lesson.thumbnail}`} 
                           alt={lesson.title} 
                           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                         />
@@ -289,7 +289,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         </div>
                         {exercise.file_url && (
                           <a
-                            href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:5931${exercise.file_url}`}
+                            href={exercise.file_url.startsWith('http') ? exercise.file_url : `https://backend.khotrithucso.vn${exercise.file_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
@@ -302,7 +302,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     </div>
                     {exercise.file_url ? (
                       <a
-                        href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:5931${exercise.file_url}`}
+                        href={exercise.file_url.startsWith('http') ? exercise.file_url : `https://backend.khotrithucso.vn${exercise.file_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:opacity-90"
@@ -355,7 +355,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         </div>
                         {test.file_url && (
                           <a
-                            href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:5931${test.file_url}`}
+                            href={test.file_url.startsWith('http') ? test.file_url : `https://backend.khotrithucso.vn${test.file_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
@@ -368,7 +368,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     </div>
                     {test.file_url ? (
                       <a
-                        href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:5931${test.file_url}`}
+                        href={test.file_url.startsWith('http') ? test.file_url : `https://backend.khotrithucso.vn${test.file_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-2 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:opacity-90"
@@ -400,7 +400,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
                       {softBook.cover_image ? (
                         <img
-                          src={softBook.cover_image.startsWith('http') ? softBook.cover_image : `http://localhost:5931${softBook.cover_image}`}
+                          src={softBook.cover_image.startsWith('http') ? softBook.cover_image : `https://backend.khotrithucso.vn${softBook.cover_image}`}
                           alt={softBook.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
@@ -409,7 +409,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                         <a
-                          href={softBook.file_url.startsWith('http') ? softBook.file_url : `http://localhost:5931${softBook.file_url}`}
+                          href={softBook.file_url.startsWith('http') ? softBook.file_url : `https://backend.khotrithucso.vn${softBook.file_url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-white text-gray-900 text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:bg-gray-100"
@@ -427,7 +427,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         <p className="text-xs text-gray-400 line-clamp-2 mb-3">{softBook.description}</p>
                       )}
                       <a
-                        href={softBook.file_url.startsWith('http') ? softBook.file_url : `http://localhost:5931${softBook.file_url}`}
+                        href={softBook.file_url.startsWith('http') ? softBook.file_url : `https://backend.khotrithucso.vn${softBook.file_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"

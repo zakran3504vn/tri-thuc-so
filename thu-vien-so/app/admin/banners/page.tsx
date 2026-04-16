@@ -12,7 +12,7 @@ interface Banner {
   is_active: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend.khotrithucso.vn/api';
 
 export default function AdminBanners() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -212,7 +212,7 @@ export default function AdminBanners() {
                 {formData.image_url && (
                   <div className="mb-3 relative">
                     <img 
-                      src={formData.image_url.startsWith('http') ? formData.image_url : `http://localhost:5931${formData.image_url}`} 
+                      src={formData.image_url.startsWith('http') ? formData.image_url : `https://backend.khotrithucso.vn${formData.image_url}`} 
                       alt="Preview" 
                       className="w-full h-40 object-cover rounded-lg border border-gray-200"
                     />

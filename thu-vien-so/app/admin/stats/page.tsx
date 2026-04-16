@@ -11,7 +11,7 @@ interface Stat {
   is_active: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend.khotrithucso.vn/api';
 
 const iconOptions = [
   'ri-book-2-line', 'ri-user-star-line', 'ri-file-text-line', 'ri-award-line',

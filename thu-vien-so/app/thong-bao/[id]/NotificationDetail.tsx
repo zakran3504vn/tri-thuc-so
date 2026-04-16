@@ -90,7 +90,7 @@ export default function NotificationDetail({ newsId }: Props) {
         <div className="relative h-80 overflow-hidden">
           <img 
             src={announcement.image_url 
-              ? (announcement.image_url.startsWith('http') ? announcement.image_url : `http://localhost:5931${announcement.image_url}`)
+              ? (announcement.image_url.startsWith('http') ? announcement.image_url : `https://backend.khotrithucso.vn${announcement.image_url}`)
               : 'https://readdy.ai/api/search-image?query=education%20news%20banner%20blue%20gradient%20abstract%20modern%20clean&width=1200&height=500&seq=default&orientation=landscape'} 
             alt={announcement.title} 
             className="w-full h-full object-cover object-top" 
@@ -184,7 +184,7 @@ export default function NotificationDetail({ newsId }: Props) {
                     <Link key={r.id} href={`/thong-bao/${r.slug}`} className="flex gap-3 group cursor-pointer">
                       <img 
                         src={r.image_url 
-                          ? (r.image_url.startsWith('http') ? r.image_url : `http://localhost:5931${r.image_url}`)
+                          ? (r.image_url.startsWith('http') ? r.image_url : `https://backend.khotrithucso.vn${r.image_url}`)
                           : 'https://readdy.ai/api/search-image?query=education%20news%20thumbnail%20blue%20gradient&width=400&height=260&seq=default&orientation=landscape'} 
                         alt={r.title} 
                         className="w-16 h-12 object-cover object-top rounded-lg flex-shrink-0" 
@@ -224,7 +224,7 @@ export default function NotificationDetail({ newsId }: Props) {
                 <div className="h-40 overflow-hidden">
                   <img 
                     src={r.image_url 
-                      ? (r.image_url.startsWith('http') ? r.image_url : `http://localhost:5931${r.image_url}`)
+                      ? (r.image_url.startsWith('http') ? r.image_url : `https://backend.khotrithucso.vn${r.image_url}`)
                       : 'https://readdy.ai/api/search-image?query=education%20news%20thumbnail%20blue%20gradient&width=400&height=260&seq=default&orientation=landscape'} 
                     alt={r.title} 
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" 

@@ -68,7 +68,7 @@ export default function AdminPosts() {
     setPostPublishDate(item.publish_date ? item.publish_date.slice(0, 16) : '');
     setPostExpiryDate(item.expiry_date ? item.expiry_date.slice(0, 16) : '');
     setPostImageUrl(item.image_url || '');
-    setPreviewUrl(item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`) : '');
+    setPreviewUrl(item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `https://backend.khotrithucso.vn${item.image_url}`) : '');
     setSelectedFile(null);
     setSubmitMessage('');
     setShowForm(true);
@@ -153,7 +153,7 @@ export default function AdminPosts() {
         throw new Error('Không tìm thấy token');
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api'}/announcements/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.khotrithucso.vn/api'}/announcements/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -402,7 +402,7 @@ export default function AdminPosts() {
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   {item.image_url && (
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
+                      <img src={item.image_url.startsWith('http') ? item.image_url : `https://backend.khotrithucso.vn${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

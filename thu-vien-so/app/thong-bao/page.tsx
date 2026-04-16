@@ -100,7 +100,7 @@ export default function ThongBaoPage() {
                   <div className="relative overflow-hidden h-48 bg-gradient-to-br from-blue-100 to-green-100">
                     {item.image_url ? (
                       <img 
-                        src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`} 
+                        src={item.image_url.startsWith('http') ? item.image_url : `https://backend.khotrithucso.vn${item.image_url}`} 
                         alt={item.title} 
                         className="w-full h-full object-cover"
                       />

@@ -56,8 +56,8 @@ export default function SachThamKhaoDetailPage({ params }: { params: Promise<{ i
     );
   }
 
-  const fileUrl = book.file_url.startsWith('http') ? book.file_url : `http://localhost:5931${book.file_url}`;
-  const coverUrl = book.cover_image ? (book.cover_image.startsWith('http') ? book.cover_image : `http://localhost:5931${book.cover_image}`) : null;
+  const fileUrl = book.file_url.startsWith('http') ? book.file_url : `https://backend.khotrithucso.vn${book.file_url}`;
+  const coverUrl = book.cover_image ? (book.cover_image.startsWith('http') ? book.cover_image : `https://backend.khotrithucso.vn${book.cover_image}`) : null;
 
   return (
     <div className="min-h-screen bg-gray-50">

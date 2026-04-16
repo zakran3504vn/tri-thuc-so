@@ -79,7 +79,7 @@ export default function AdminHomepage() {
 
   const fetchBanners = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5931/api/banners');
+      const response = await fetch('https://backend.khotrithucso.vn/api/banners');
       const data = await response.json();
       setBanners(data);
     } catch (error) {
@@ -89,7 +89,7 @@ export default function AdminHomepage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5931/api/stats');
+      const response = await fetch('https://backend.khotrithucso.vn/api/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -99,7 +99,7 @@ export default function AdminHomepage() {
 
   const fetchNews = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5931/api/news');
+      const response = await fetch('https://backend.khotrithucso.vn/api/news');
       const data = await response.json();
       setNews(data);
     } catch (error) {
@@ -117,8 +117,8 @@ export default function AdminHomepage() {
     e.preventDefault();
     try {
       const url = editingBanner
-        ? `http://localhost:5931/api/banners/${editingBanner.id}`
-        : 'http://localhost:5931/api/banners';
+        ? `https://backend.khotrithucso.vn/api/banners/${editingBanner.id}`
+        : 'https://backend.khotrithucso.vn/api/banners';
       const method = editingBanner ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
@@ -142,8 +142,8 @@ export default function AdminHomepage() {
     e.preventDefault();
     try {
       const url = editingStat
-        ? `http://localhost:5931/api/stats/${editingStat.id}`
-        : 'http://localhost:5931/api/stats';
+        ? `https://backend.khotrithucso.vn/api/stats/${editingStat.id}`
+        : 'https://backend.khotrithucso.vn/api/stats';
       const method = editingStat ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
@@ -167,8 +167,8 @@ export default function AdminHomepage() {
     e.preventDefault();
     try {
       const url = editingNews
-        ? `http://localhost:5931/api/news/${editingNews.id}`
-        : 'http://localhost:5931/api/news';
+        ? `https://backend.khotrithucso.vn/api/news/${editingNews.id}`
+        : 'https://backend.khotrithucso.vn/api/news';
       const method = editingNews ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
@@ -191,7 +191,7 @@ export default function AdminHomepage() {
   const deleteBanner = async (id: number) => {
     if (confirm('Bạn có chắc chắn muốn xóa banner này?')) {
       try {
-        await fetch(`http://localhost:5931/api/banners/${id}`, { method: 'DELETE' });
+        await fetch(`https://backend.khotrithucso.vn/api/banners/${id}`, { method: 'DELETE' });
         fetchBanners();
       } catch (error) {
         console.error('Failed to delete banner:', error);
@@ -202,7 +202,7 @@ export default function AdminHomepage() {
   const deleteStat = async (id: number) => {
     if (confirm('Bạn có chắc chắn muốn xóa stat này?')) {
       try {
-        await fetch(`http://localhost:5931/api/stats/${id}`, { method: 'DELETE' });
+        await fetch(`https://backend.khotrithucso.vn/api/stats/${id}`, { method: 'DELETE' });
         fetchStats();
       } catch (error) {
         console.error('Failed to delete stat:', error);
@@ -213,7 +213,7 @@ export default function AdminHomepage() {
   const deleteNews = async (id: number) => {
     if (confirm('Bạn có chắc chắn muốn xóa tin tức này?')) {
       try {
-        await fetch(`http://localhost:5931/api/news/${id}`, { method: 'DELETE' });
+        await fetch(`https://backend.khotrithucso.vn/api/news/${id}`, { method: 'DELETE' });
         fetchNews();
       } catch (error) {
         console.error('Failed to delete news:', error);

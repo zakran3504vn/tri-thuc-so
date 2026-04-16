@@ -181,7 +181,7 @@ export default function AdminSubjects() {
       if (subjectImageFile) {
         const formData = new FormData();
         formData.append('image', subjectImageFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -217,7 +217,7 @@ export default function AdminSubjects() {
       if (lessonVideoFile) {
         const formData = new FormData();
         formData.append('video', lessonVideoFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload-video', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload-video', {
           method: 'POST',
           body: formData,
         });
@@ -231,7 +231,7 @@ export default function AdminSubjects() {
       if (lessonThumbnailFile) {
         const formData = new FormData();
         formData.append('image', lessonThumbnailFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -267,7 +267,7 @@ export default function AdminSubjects() {
       if (exerciseFile) {
         const formData = new FormData();
         formData.append('file', exerciseFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload-exercise', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload-exercise', {
           method: 'POST',
           body: formData,
         });
@@ -301,7 +301,7 @@ export default function AdminSubjects() {
       if (testFile) {
         const formData = new FormData();
         formData.append('file', testFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload-test', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload-test', {
           method: 'POST',
           body: formData,
         });
@@ -336,7 +336,7 @@ export default function AdminSubjects() {
       if (softBookFile) {
         const formData = new FormData();
         formData.append('file', softBookFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload-soft-book', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload-soft-book', {
           method: 'POST',
           body: formData,
         });
@@ -350,7 +350,7 @@ export default function AdminSubjects() {
       if (softBookCoverFile) {
         const formData = new FormData();
         formData.append('image', softBookCoverFile);
-        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
+        const uploadResponse = await fetch('https://backend.khotrithucso.vn/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -545,7 +545,7 @@ export default function AdminSubjects() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     {subject.thumbnail && (
-                      <img src={subject.thumbnail.startsWith('http') ? subject.thumbnail : `http://localhost:5931${subject.thumbnail}`} alt={subject.title} className="w-10 h-10 rounded-xl object-cover" />
+                      <img src={subject.thumbnail.startsWith('http') ? subject.thumbnail : `https://backend.khotrithucso.vn${subject.thumbnail}`} alt={subject.title} className="w-10 h-10 rounded-xl object-cover" />
                     )}
                     {!subject.thumbnail && (
                       <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
@@ -573,7 +573,7 @@ export default function AdminSubjects() {
                         grade_level: subject.grade_level || '',
                         thumbnail: subject.thumbnail || ''
                       });
-                      setSubjectImagePreview(subject.thumbnail && subject.thumbnail.startsWith('http') ? subject.thumbnail : subject.thumbnail ? `http://localhost:5931${subject.thumbnail}` : '');
+                      setSubjectImagePreview(subject.thumbnail && subject.thumbnail.startsWith('http') ? subject.thumbnail : subject.thumbnail ? `https://backend.khotrithucso.vn${subject.thumbnail}` : '');
                       setShowSubjectForm(true);
                     }}
                     className="flex-1 py-1.5 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg hover:bg-blue-100 cursor-pointer whitespace-nowrap"
@@ -781,7 +781,7 @@ export default function AdminSubjects() {
                               order_index: lesson.order_index,
                               thumbnail: lesson.thumbnail || ''
                             });
-                            setLessonThumbnailPreview(lesson.thumbnail && lesson.thumbnail.startsWith('http') ? lesson.thumbnail : lesson.thumbnail ? `http://localhost:5931${lesson.thumbnail}` : '');
+                            setLessonThumbnailPreview(lesson.thumbnail && lesson.thumbnail.startsWith('http') ? lesson.thumbnail : lesson.thumbnail ? `https://backend.khotrithucso.vn${lesson.thumbnail}` : '');
                             setShowLessonForm(true);
                           }}
                           className="px-3 py-1.5 bg-yellow-50 text-yellow-600 text-xs font-semibold rounded-lg hover:bg-yellow-100 cursor-pointer"

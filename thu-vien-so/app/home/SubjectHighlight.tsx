@@ -93,7 +93,7 @@ export default function SubjectHighlight() {
                 <Link key={s.id} href={`/mon-hoc/${s.slug}`} className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer block bg-white border border-gray-100">
                   <div className="relative h-44 overflow-hidden rounded-t-2xl">
                     <img 
-                      src={s.thumbnail ? (s.thumbnail.startsWith('http') ? s.thumbnail : `http://localhost:5931${s.thumbnail}`) : defaultImage} 
+                      src={s.thumbnail ? (s.thumbnail.startsWith('http') ? s.thumbnail : `https://backend.khotrithucso.vn${s.thumbnail}`) : defaultImage} 
                       alt={s.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                     />

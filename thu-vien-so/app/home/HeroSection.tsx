@@ -73,7 +73,7 @@ export default function HeroSection() {
               }`}
             >
               <img
-                src={banner.image_url?.startsWith('http') ? banner.image_url : `http://localhost:5931${banner.image_url}`}
+                src={banner.image_url?.startsWith('http') ? banner.image_url : `https://backend.khotrithucso.vn${banner.image_url}`}
                 alt={banner.title}
                 className="w-full h-full object-cover"
               />
@@ -125,28 +125,15 @@ export default function HeroSection() {
                 </span>
               </h1>
 
-              <p className="fade-up opacity-0 translate-y-8 transition-all duration-700 delay-200 text-lg text-white/90 leading-relaxed mb-8 max-w-xl drop-shadow-md">
-                Mang tri thức số ươm mầm tương lai. Kho tài nguyên học tập phong phú với hàng nghìn bài giảng, sách điện tử và hoạt động trải nghiệm sáng tạo.
-              </p>
-
               <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 delay-300 flex flex-wrap gap-4">
                 <Link href={currentBanner?.link_url || '/mon-hoc'} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-semibold rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 whitespace-nowrap cursor-pointer shadow-lg">
                   <span className="w-5 h-5 flex items-center justify-center"><i className="ri-book-open-line"></i></span>
                   Khám phá ngay
                 </Link>
-                <Link href="/truyen-doc" className="flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/40 text-white font-semibold rounded-full hover:bg-white/30 transition-all duration-300 whitespace-nowrap cursor-pointer shadow-lg">
+                {/* <Link href="/truyen-doc" className="flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/40 text-white font-semibold rounded-full hover:bg-white/30 transition-all duration-300 whitespace-nowrap cursor-pointer shadow-lg">
                   <span className="w-5 h-5 flex items-center justify-center"><i className="ri-play-circle-line"></i></span>
                   Đọc truyện
-                </Link>
-              </div>
-
-              <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 delay-400 flex items-center gap-6 mt-10">
-                {[['1,200+','Bài giảng'],['500+','Đầu sách'],['50,000+','Học sinh']].map(([num, label]) => (
-                  <div key={label} className="text-center">
-                    <div className="text-2xl font-extrabold text-white drop-shadow-md">{num}</div>
-                    <div className="text-white/80 text-xs mt-0.5">{label}</div>
-                  </div>
-                ))}
+                </Link> */}
               </div>
             </div>
           </div>

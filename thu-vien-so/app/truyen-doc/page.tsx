@@ -63,7 +63,7 @@ export default function TruyenDocPage() {
                 {books.map((book: Story) => (
                   <Link key={book.id} href={`/truyen-doc/${book.id}`} className="group cursor-pointer block">
                     <div className="relative overflow-hidden rounded-xl shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1" style={{ paddingBottom: '140%' }}>
-                      <img src={book.cover_image ? (book.cover_image.startsWith('http') ? book.cover_image : `http://localhost:5931${book.cover_image}`) : '/placeholder.jpg'} alt={book.title} className="absolute inset-0 w-full h-full object-contain" />
+                      <img src={book.cover_image ? (book.cover_image.startsWith('http') ? book.cover_image : `https://backend.khotrithucso.vn${book.cover_image}`) : '/placeholder.jpg'} alt={book.title} className="absolute inset-0 w-full h-full object-contain" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
                         <span className="text-white text-xs font-semibold flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center"><i className="ri-book-open-line"></i></span>Đọc ngay</span>
                       </div>
