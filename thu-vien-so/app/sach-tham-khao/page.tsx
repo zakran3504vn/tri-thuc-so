@@ -230,7 +230,7 @@ export default function SachThamKhaoPage() {
                       <div className="relative overflow-hidden rounded-xl shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
                         {book.cover_image ? (
                           <img 
-                            src={book.cover_image.startsWith('http') ? book.cover_image : `http://localhost:3001${book.cover_image}`} 
+                            src={book.cover_image.startsWith('http') ? book.cover_image : `http://localhost:5931${book.cover_image}`} 
                             alt={book.title} 
                             className="w-full h-56 object-cover object-top" 
                           />

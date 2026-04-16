@@ -65,14 +65,25 @@ export default function AdminDashboard() {
               <div key={item.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                      item.announcement_type === 'urgent' ? 'bg-red-100 text-red-700' :
-                      item.announcement_type === 'event' ? 'bg-green-100 text-green-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {item.announcement_type === 'urgent' ? 'Khẩn cấp' :
-                       item.announcement_type === 'event' ? 'Sự kiện' : 'Thông báo chung'}
-                    </span>
+                    {item.category_name && (
+                      <span 
+                        className="text-xs font-semibold px-2 py-1 rounded-full"
+                        style={{ 
+                          backgroundColor: item.category_color === 'blue' ? '#dbeafe' :
+                                          item.category_color === 'red' ? '#fee2e2' :
+                                          item.category_color === 'green' ? '#dcfce7' :
+                                          item.category_color === 'purple' ? '#f3e8ff' :
+                                          item.category_color === 'orange' ? '#ffedd5' : '#f3f4f6',
+                          color: item.category_color === 'blue' ? '#1d4ed8' :
+                                 item.category_color === 'red' ? '#b91c1c' :
+                                 item.category_color === 'green' ? '#15803d' :
+                                 item.category_color === 'purple' ? '#7c3aed' :
+                                 item.category_color === 'orange' ? '#c2410c' : '#374151'
+                        }}
+                      >
+                        {item.category_name}
+                      </span>
+                    )}
                     <span className="text-xs text-gray-400">{formatDate(item.publish_date)}</span>
                   </div>
                   <div className="font-medium text-gray-800 text-sm">{item.title}</div>

@@ -18,12 +18,16 @@ const referenceBooksRoutes = require('./routes/referenceBooks');
 const announcementsRoutes = require('./routes/announcements');
 const exercisesRoutes = require('./routes/exercises');
 const testsRoutes = require('./routes/tests');
+const softBooksRoutes = require('./routes/softBooks');
 const authRoutes = require('./routes/auth');
 const contactInfoRoutes = require('./routes/contactInfo');
 const contactSubmissionsRoutes = require('./routes/contactSubmissions');
+const bannersRoutes = require('./routes/banners');
+const statsRoutes = require('./routes/stats');
+const newsRoutes = require('./routes/news');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5931;
 
 // Tạo thư mục uploads nếu chưa tồn tại
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -53,6 +57,12 @@ if (!fs.existsSync(exercisesDir)) {
 const testsDir = path.join(__dirname, '../uploads/tests');
 if (!fs.existsSync(testsDir)) {
   fs.mkdirSync(testsDir, { recursive: true });
+}
+
+// Tạo thư mục uploads/soft-books cho sách mềm
+const softBooksDir = path.join(__dirname, '../uploads/soft-books');
+if (!fs.existsSync(softBooksDir)) {
+  fs.mkdirSync(softBooksDir, { recursive: true });
 }
 
 // Cấu hình multer
@@ -196,6 +206,34 @@ const uploadTest = multer({
   }
 });
 
+// Cấu hình multer cho sách mềm
+const softBookStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, softBooksDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadSoftBook = multer({
+  storage: softBookStorage,
+  limits: {
+    fileSize: 100 * 1024 * 1024 // 100MB for soft book files
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /pdf|doc|docx|txt|xlsx|xls|ppt|pptx|epub/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Chỉ chấp nhận file tài liệu (pdf, doc, docx, txt, xlsx, xls, ppt, pptx, epub)'));
+  }
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -218,9 +256,13 @@ app.use('/api/reference-books', referenceBooksRoutes);
 app.use('/api/announcements', announcementsRoutes);
 app.use('/api/exercises', exercisesRoutes);
 app.use('/api/tests', testsRoutes);
+app.use('/api/soft-books', softBooksRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/contact-info', contactInfoRoutes);
 app.use('/api/contact-submissions', contactSubmissionsRoutes);
+app.use('/api/banners', bannersRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/news', newsRoutes);
 
 // Upload image route
 app.post('/api/upload', upload.single('image'), (req, res) => {
@@ -314,6 +356,25 @@ app.post('/api/upload-test', uploadTest.single('file'), (req, res) => {
   } catch (error) {
     console.error('Lỗi khi upload file đề kiểm tra:', error);
     res.status(500).json({ error: 'Lỗi khi upload file đề kiểm tra' });
+  }
+});
+
+// Upload soft book file route
+app.post('/api/upload-soft-book', uploadSoftBook.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Không có file nào được upload' });
+    }
+
+    const fileUrl = `/uploads/soft-books/${req.file.filename}`;
+    res.json({
+      success: true,
+      fileUrl: fileUrl,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('Lỗi khi upload file sách mềm:', error);
+    res.status(500).json({ error: 'Lỗi khi upload file sách mềm' });
   }
 });
 

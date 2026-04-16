@@ -2,6 +2,34 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
+// Helper function to generate slug from title
+function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// Helper function to generate unique slug
+async function generateUniqueSlug(title) {
+  let baseSlug = generateSlug(title);
+  let slug = baseSlug;
+  let counter = 1;
+
+  while (true) {
+    const [existing] = await pool.query('SELECT id FROM subjects WHERE slug = ?', [slug]);
+    if (existing.length === 0) {
+      return slug;
+    }
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+}
+
 // Lấy danh sách môn học
 router.get('/', async (req, res) => {
   try {
@@ -48,6 +76,26 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Lấy môn học theo slug
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const [rows] = await pool.query(
+      'SELECT s.*, u.full_name as teacher_name FROM subjects s LEFT JOIN users u ON s.teacher_id = u.id WHERE s.slug = ?',
+      [slug]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy môn học' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Lỗi khi lấy môn học theo slug:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
 // Tạo môn học mới
 router.post('/', async (req, res) => {
   try {
@@ -57,9 +105,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Thiếu tiêu đề môn học' });
     }
 
+    // Generate unique slug
+    const slug = await generateUniqueSlug(title);
+
     const [result] = await pool.query(
-      'INSERT INTO subjects (title, description, grade_level, teacher_id, thumbnail) VALUES (?, ?, ?, ?, ?)',
-      [title, description || null, grade_level || null, teacher_id || null, thumbnail || null]
+      'INSERT INTO subjects (title, slug, description, grade_level, teacher_id, thumbnail) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, slug, description || null, grade_level || null, teacher_id || null, thumbnail || null]
     );
 
     const [newSubject] = await pool.query(
@@ -79,9 +130,21 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, grade_level, teacher_id, thumbnail, is_active } = req.body;
 
+    // Get current subject to check if title changed
+    const [current] = await pool.query('SELECT * FROM subjects WHERE id = ?', [id]);
+    if (current.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy môn học' });
+    }
+
+    let slug = current[0].slug;
+    if (title && title !== current[0].title) {
+      // Generate new slug if title changed
+      slug = await generateUniqueSlug(title);
+    }
+
     const [result] = await pool.query(
-      'UPDATE subjects SET title = ?, description = ?, grade_level = ?, teacher_id = ?, thumbnail = ?, is_active = ? WHERE id = ?',
-      [title, description, grade_level, teacher_id, thumbnail, is_active, id]
+      'UPDATE subjects SET title = ?, slug = ?, description = ?, grade_level = ?, teacher_id = ?, thumbnail = ?, is_active = ? WHERE id = ?',
+      [title, slug, description, grade_level, teacher_id, thumbnail, is_active, id]
     );
 
     if (result.affectedRows === 0) {

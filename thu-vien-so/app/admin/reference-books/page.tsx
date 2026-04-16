@@ -25,6 +25,7 @@ export default function AdminReferenceBooks() {
   const [coverImage, setCoverImage] = useState('');
   const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isFeatured, setIsFeatured] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [books, setBooks] = useState<ReferenceBook[]>([]);
@@ -42,7 +43,7 @@ export default function AdminReferenceBooks() {
     try {
       const [booksData, subjectsData] = await Promise.all([
         getReferenceBooks(),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/subjects`).then(res => res.json())
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api'}/subjects`).then(res => res.json())
       ]);
       setBooks(booksData);
       setSubjects(subjectsData);
@@ -67,6 +68,7 @@ export default function AdminReferenceBooks() {
     setCoverImage('');
     setSelectedCoverFile(null);
     setPreviewUrl('');
+    setIsFeatured(false);
     setSubmitMessage('');
     setShowForm(true);
   };
@@ -83,8 +85,9 @@ export default function AdminReferenceBooks() {
     setFileUrl(item.file_url);
     setSelectedFile(null);
     setCoverImage(item.cover_image || '');
-    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:3001${item.cover_image}`) : '');
+    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`) : '');
     setSelectedCoverFile(null);
+    setIsFeatured(item.is_featured || false);
     setSubmitMessage('');
     setShowForm(true);
   };
@@ -127,6 +130,7 @@ export default function AdminReferenceBooks() {
         file_type: selectedFile?.type || undefined,
         file_size: selectedFile?.size || undefined,
         cover_image: finalCoverImage || undefined,
+        is_featured: isFeatured,
       };
 
       if (editingId) {
@@ -302,7 +306,7 @@ export default function AdminReferenceBooks() {
                     <p className="text-xs text-gray-500 truncate">{fileUrl}</p>
                   </div>
                   <a
-                    href={fileUrl.startsWith('http') ? fileUrl : `http://localhost:3001${fileUrl}`}
+                    href={fileUrl.startsWith('http') ? fileUrl : `http://localhost:5931${fileUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 cursor-pointer"
@@ -384,6 +388,16 @@ export default function AdminReferenceBooks() {
                 </div>
               )}
             </div>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                id="is-featured"
+                checked={isFeatured}
+                onChange={e => setIsFeatured(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <label htmlFor="is-featured" className="text-sm text-gray-700">Nổi bật (hiển thị trên trang chủ)</label>
+            </div>
             <div className="flex gap-3">
               <button
                 type="submit"
@@ -427,11 +441,16 @@ export default function AdminReferenceBooks() {
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   {item.cover_image && (
                     <div className="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:3001${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
+                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      {item.is_featured && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                          Nổi bật
+                        </span>
+                      )}
                       {item.category && (
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                           {item.category}
@@ -454,7 +473,7 @@ export default function AdminReferenceBooks() {
                   </div>
                   <div className="flex items-center gap-2">
                     <a
-                      href={item.file_url.startsWith('http') ? item.file_url : `http://localhost:3001${item.file_url}`}
+                      href={item.file_url.startsWith('http') ? item.file_url : `http://localhost:5931${item.file_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer"

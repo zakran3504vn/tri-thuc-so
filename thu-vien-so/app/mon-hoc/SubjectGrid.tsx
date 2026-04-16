@@ -20,6 +20,17 @@ export default function SubjectGrid() {
   const [subjectCounts, setSubjectCounts] = useState<Record<number, { lessons: number; exercises: number; tests: number }>>({});
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [imageOrientations, setImageOrientations] = useState<Record<number, 'landscape' | 'portrait' | 'square'>>({});
+
+  const handleImageLoad = (subjectId: number, img: HTMLImageElement) => {
+    const { naturalWidth, naturalHeight } = img;
+    const ratio = naturalWidth / naturalHeight;
+    let orientation: 'landscape' | 'portrait' | 'square';
+    if (ratio > 1.2) orientation = 'landscape';
+    else if (ratio < 0.8) orientation = 'portrait';
+    else orientation = 'square';
+    setImageOrientations(prev => ({ ...prev, [subjectId]: orientation }));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,9 +42,9 @@ export default function SubjectGrid() {
         const counts: Record<number, { lessons: number; exercises: number; tests: number }> = {};
         for (const subject of subjectsData) {
           const [lessons, exercises, tests] = await Promise.all([
-            fetch(`http://localhost:3001/api/lessons?subject_id=${subject.id}`).then(res => res.json()),
-            fetch(`http://localhost:3001/api/exercises?subject_id=${subject.id}`).then(res => res.json()),
-            fetch(`http://localhost:3001/api/tests?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/lessons?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/exercises?subject_id=${subject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/tests?subject_id=${subject.id}`).then(res => res.json()),
           ]);
           counts[subject.id] = {
             lessons: lessons.length || 0,
@@ -89,19 +100,23 @@ export default function SubjectGrid() {
             subjects.map((s) => {
               const info = getSubjectInfo(s.title);
               const counts = subjectCounts[s.id] || { lessons: 0, exercises: 0, tests: 0 };
-              const slug = s.title.toLowerCase().replace(/\s+/g, '-');
+              const slug = s.slug || s.id.toString();
+              
+              const orientation = imageOrientations[s.id];
+              const imageHeightClass = orientation === 'portrait' ? 'h-56' : orientation === 'square' ? 'h-48' : 'h-44';
               
               return (
                 <Link key={s.id} href={`/mon-hoc/${slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer block">
-                  <div className="relative h-44 overflow-hidden">
+                  <div className={`relative ${imageHeightClass} overflow-hidden bg-gray-100 flex items-center justify-center`}>
                     <img 
                       src={!imageErrors[s.id] && s.thumbnail 
-                        ? (s.thumbnail.startsWith('http') ? s.thumbnail : `http://localhost:3001${s.thumbnail}`)
+                        ? (s.thumbnail.startsWith('http') ? s.thumbnail : `http://localhost:5931${s.thumbnail}`)
                         : info.img
                       } 
                       alt={s.title} 
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       onError={() => setImageErrors(prev => ({ ...prev, [s.id]: true }))}
+                      onLoad={(e) => handleImageLoad(s.id, e.currentTarget)}
                     />
                     <div className="absolute top-4 left-4 flex items-center gap-2">
                       <div className="w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl shadow-sm">

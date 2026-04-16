@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { createAnnouncement, getAnnouncements, updateAnnouncement, uploadImage, Announcement } from '@/lib/api';
+import { createAnnouncement, getAnnouncements, updateAnnouncement, uploadImage, getAnnouncementCategories, Announcement, AnnouncementCategory } from '@/lib/api';
 
 export default function AdminPosts() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [postTitle, setPostTitle] = useState('');
+  const [postSlug, setPostSlug] = useState('');
   const [postContent, setPostContent] = useState('');
-  const [postCategory, setPostCategory] = useState('general');
+  const [postCategoryId, setPostCategoryId] = useState<number | null>(null);
   const [postPriority, setPostPriority] = useState(1);
   const [postPublishDate, setPostPublishDate] = useState('');
   const [postExpiryDate, setPostExpiryDate] = useState('');
@@ -17,30 +18,36 @@ export default function AdminPosts() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [categories, setCategories] = useState<AnnouncementCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnnouncements = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          const data = await getAnnouncements(undefined, true);
-          setAnnouncements(data);
+          const [announcementsData, categoriesData] = await Promise.all([
+            getAnnouncements(undefined, undefined, true),
+            getAnnouncementCategories()
+          ]);
+          setAnnouncements(announcementsData);
+          setCategories(categoriesData);
         }
       } catch (error) {
-        console.error('Failed to fetch announcements:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchAnnouncements();
+    fetchData();
   }, []);
 
   const handleAddNew = () => {
     setEditingId(null);
     setPostTitle('');
+    setPostSlug('');
     setPostContent('');
-    setPostCategory('general');
+    setPostCategoryId(null);
     setPostPriority(1);
     setPostPublishDate('');
     setPostExpiryDate('');
@@ -54,13 +61,14 @@ export default function AdminPosts() {
   const handleEdit = (item: Announcement) => {
     setEditingId(item.id);
     setPostTitle(item.title);
+    setPostSlug(item.slug);
     setPostContent(item.content);
-    setPostCategory(item.announcement_type);
+    setPostCategoryId(item.category_id);
     setPostPriority(item.priority);
     setPostPublishDate(item.publish_date ? item.publish_date.slice(0, 16) : '');
     setPostExpiryDate(item.expiry_date ? item.expiry_date.slice(0, 16) : '');
     setPostImageUrl(item.image_url || '');
-    setPreviewUrl(item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:3001${item.image_url}`) : '');
+    setPreviewUrl(item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`) : '');
     setSelectedFile(null);
     setSubmitMessage('');
     setShowForm(true);
@@ -92,8 +100,9 @@ export default function AdminPosts() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const announcementData = {
         title: postTitle,
+        slug: postSlug || undefined,
         content: postContent,
-        announcement_type: postCategory,
+        category_id: postCategoryId ?? undefined,
         priority: postPriority,
         publish_date: postPublishDate || new Date().toISOString(),
         expiry_date: postExpiryDate || undefined,
@@ -111,8 +120,9 @@ export default function AdminPosts() {
 
       // Reset form and close
       setPostTitle('');
+      setPostSlug('');
       setPostContent('');
-      setPostCategory('general');
+      setPostCategoryId(null);
       setPostPriority(1);
       setPostPublishDate('');
       setPostExpiryDate('');
@@ -123,7 +133,7 @@ export default function AdminPosts() {
       setTimeout(() => setShowForm(false), 1500);
 
       // Reload announcements
-      const updatedAnnouncements = await getAnnouncements(undefined, true);
+      const updatedAnnouncements = await getAnnouncements(undefined, undefined, true);
       setAnnouncements(updatedAnnouncements);
     } catch (error: any) {
       setSubmitMessage(error.message || 'Lỗi khi lưu thông báo');
@@ -143,21 +153,21 @@ export default function AdminPosts() {
         throw new Error('Không tìm thấy token');
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/announcements/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api'}/announcements/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
 
       // Reload announcements
-      const refreshedAnnouncements = await getAnnouncements(undefined, true);
+      const refreshedAnnouncements = await getAnnouncements(undefined, undefined, true);
       setAnnouncements(refreshedAnnouncements);
     } catch (error) {
       console.error('Failed to delete announcement:', error);
     }
   };
 
-  const handleView = (id: number) => {
-    window.open(`/thong-bao/${id}`, '_blank');
+  const handleView = (announcement: Announcement) => {
+    window.open(`/thong-bao/${announcement.slug}`, '_blank');
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,66 +208,107 @@ export default function AdminPosts() {
             </div>
           )}
           <form onSubmit={handleSubmitAnnouncement} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tiêu đề thông báo</label>
-              <input 
-                value={postTitle} 
-                onChange={e => setPostTitle(e.target.value)} 
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                placeholder="Nhập tiêu đề..." 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Loại thông báo</label>
-              <div className="flex gap-2">
-                {[
-                  { value: 'general', label: 'Thông báo chung' },
-                  { value: 'urgent', label: 'Khẩn cấp' },
-                  { value: 'event', label: 'Sự kiện' }
-                ].map(c => (
-                  <button 
-                    key={c.value} 
-                    type="button"
-                    onClick={() => setPostCategory(c.value)} 
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${postCategory === c.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            {/* === THÔNG TIN CƠ BẢN === */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                <i className="ri-article-line text-blue-500"></i>
+                Thông tin cơ bản
+              </h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Tiêu đề thông báo <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  value={postTitle} 
+                  onChange={e => setPostTitle(e.target.value)} 
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  placeholder="Nhập tiêu đề thông báo..." 
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug (URL)</label>
+                  <input 
+                    value={postSlug} 
+                    onChange={e => setPostSlug(e.target.value)} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" 
+                    placeholder="tu-dong-tao-tu-tieu-de..." 
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Để trống để tự động tạo</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Danh mục <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    value={postCategoryId || ''} 
+                    onChange={e => setPostCategoryId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   >
-                    {c.label}
-                  </button>
-                ))}
+                    <option value="">-- Chọn danh mục --</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Độ ưu tiên</label>
-              <select 
-                value={postPriority} 
-                onChange={e => setPostPriority(Number(e.target.value))}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="1">Thấp</option>
-                <option value="2">Trung bình</option>
-                <option value="3">Cao</option>
-              </select>
+
+            {/* === CÀI ĐẶT HIỂN THỊ === */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                <i className="ri-settings-3-line text-green-500"></i>
+                Cài đặt hiển thị
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Độ ưu tiên</label>
+                  <select 
+                    value={postPriority} 
+                    onChange={e => setPostPriority(Number(e.target.value))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="1">Thấp</option>
+                    <option value="2">Trung bình</option>
+                    <option value="3">Cao</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày đăng</label>
+                  <input 
+                    type="datetime-local"
+                    value={postPublishDate}
+                    onChange={e => setPostPublishDate(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày hết hạn</label>
+                  <input 
+                    type="datetime-local"
+                    value={postExpiryDate}
+                    onChange={e => setPostExpiryDate(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày đăng</label>
-              <input 
-                type="datetime-local"
-                value={postPublishDate}
-                onChange={e => setPostPublishDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày hết hạn (tùy chọn)</label>
-              <input 
-                type="datetime-local"
-                value={postExpiryDate}
-                onChange={e => setPostExpiryDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ảnh bìa</label>
+
+            {/* === ẢNH BÌA === */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                <i className="ri-image-line text-purple-500"></i>
+                Ảnh bìa (tùy chọn)
+              </h4>
+              
               {previewUrl ? (
                 <div className="relative">
                   <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-xl" />
@@ -270,7 +321,7 @@ export default function AdminPosts() {
                   </button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-white">
                   <input 
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
@@ -291,14 +342,21 @@ export default function AdminPosts() {
                 </div>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nội dung</label>
+
+            {/* === NỘI DUNG === */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                <i className="ri-file-text-line text-orange-500"></i>
+                Nội dung chi tiết <span className="text-red-500">*</span>
+              </h4>
+              
               <textarea 
                 value={postContent} 
                 onChange={e => setPostContent(e.target.value)} 
-                rows={8} 
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" 
-                placeholder="Nhập nội dung thông báo..."
+                rows={10} 
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white" 
+                placeholder="Nhập nội dung thông báo chi tiết..."
+                required
               ></textarea>
             </div>
             <div className="flex gap-3">
@@ -344,19 +402,22 @@ export default function AdminPosts() {
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   {item.image_url && (
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:3001${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
+                      <img src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:5931${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        item.announcement_type === 'urgent' ? 'bg-red-100 text-red-700' :
-                        item.announcement_type === 'event' ? 'bg-green-100 text-green-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {item.announcement_type === 'urgent' ? 'Khẩn cấp' :
-                         item.announcement_type === 'event' ? 'Sự kiện' : 'Thông báo chung'}
-                      </span>
+                      {item.category_name && (
+                        <span 
+                          className="text-xs font-semibold px-2 py-1 rounded-full"
+                          style={{ 
+                            backgroundColor: item.category_color ? `var(--${item.category_color}-100, #dbeafe)` : '#dbeafe',
+                            color: item.category_color ? `var(--${item.category_color}-700, #1d4ed8)` : '#1d4ed8'
+                          }}
+                        >
+                          {item.category_name}
+                        </span>
+                      )}
                       <span className="text-xs text-gray-400">{formatDate(item.publish_date)}</span>
                     </div>
                     <div className="font-medium text-gray-800 text-sm truncate">{item.title}</div>
@@ -364,7 +425,7 @@ export default function AdminPosts() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button 
-                      onClick={() => handleView(item.id)}
+                      onClick={() => handleView(item)}
                       className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer"
                       title="Xem"
                     >

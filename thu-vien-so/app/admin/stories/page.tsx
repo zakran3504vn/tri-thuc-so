@@ -64,7 +64,7 @@ export default function AdminStories() {
     setTotalPages(item.total_pages);
     setDescription(item.description || '');
     setCoverImage(item.cover_image || '');
-    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:3001${item.cover_image}`) : '');
+    setPreviewUrl(item.cover_image ? (item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`) : '');
     setSelectedCoverFile(null);
     setSubmitMessage('');
     setShowForm(true);
@@ -313,7 +313,7 @@ export default function AdminStories() {
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   {item.cover_image && (
                     <div className="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:3001${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
+                      <img src={item.cover_image.startsWith('http') ? item.cover_image : `http://localhost:5931${item.cover_image}`} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

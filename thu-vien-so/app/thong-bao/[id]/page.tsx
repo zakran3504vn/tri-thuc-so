@@ -1,16 +1,9 @@
 import NotificationDetail from './NotificationDetail';
 
-export async function generateStaticParams() {
-  return [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '4' },
-    { id: '5' },
-    { id: '6' },
-  ];
-}
+// Disable static generation for dynamic slug-based pages
+export const dynamic = 'force-dynamic';
 
-export default function ThongBaoDetailPage({ params }: { params: { id: string } }) {
-  return <NotificationDetail newsId={params.id} />;
+export default async function ThongBaoDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <NotificationDetail newsId={id} />;
 }

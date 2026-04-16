@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
-import { getSubject, getLessons, getExercises, getTests, Subject, Lesson, Exercise, Test } from '@/lib/api';
+import { getSubject, getLessons, getExercises, getTests, getSoftBooks, Subject, Lesson, Exercise, Test, SoftBook } from '@/lib/api';
 
 const subjectData: Record<string, { name: string; icon: string; color: string; bgGradient: string; description: string }> = {
   'toan': { name: 'Toán học', icon: 'ri-calculator-line', color: '#2563eb', bgGradient: 'from-blue-600 to-blue-800', description: 'Chương trình Toán học chuẩn quốc gia từ lớp 1 đến lớp 9' },
@@ -23,6 +23,7 @@ const tabs = [
   { id: 'bai-hoc', label: 'Bài học theo tuần', icon: 'ri-book-open-line' },
   { id: 'bai-tap', label: 'Bài tập bổ trợ', icon: 'ri-file-list-3-line' },
   { id: 'de-kiem-tra', label: 'Đề kiểm tra', icon: 'ri-file-paper-2-line' },
+  { id: 'sach-mem', label: 'Sách mềm', icon: 'ri-book-2-line' },
 ];
 
 const levelColor: Record<string, string> = {
@@ -37,29 +38,40 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [tests, setTests] = useState<Test[]>([]);
+  const [softBooks, setSoftBooks] = useState<SoftBook[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const subjectInfo = subjectData[subjectId] || { name: 'Môn học', icon: 'ri-book-line', color: '#2563eb', bgGradient: 'from-blue-600 to-blue-800', description: 'Chương trình học chuẩn quốc gia' };
+  // Use subject data from API when available, otherwise use fallback
+  const subjectInfo = subject
+    ? {
+        name: subject.title,
+        icon: 'ri-book-line',
+        color: '#2563eb',
+        bgGradient: 'from-blue-600 to-blue-800',
+        description: subject.description || 'Chương trình học chuẩn quốc gia'
+      }
+    : { name: 'Môn học', icon: 'ri-book-line', color: '#2563eb', bgGradient: 'from-blue-600 to-blue-800', description: 'Chương trình học chuẩn quốc gia' };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Try to fetch subject by name
-        const allSubjects = await fetch('http://localhost:3001/api/subjects').then(res => res.json());
-        const matchedSubject = allSubjects.find((s: Subject) => s.title.toLowerCase().includes(subjectId.toLowerCase()));
-        
-        if (matchedSubject) {
+        // Fetch subject by slug
+        const response = await fetch(`http://localhost:5931/api/subjects/slug/${subjectId}`);
+        if (response.ok) {
+          const matchedSubject = await response.json();
           setSubject(matchedSubject);
-          // Fetch lessons, exercises, and tests for this subject
-          const [lessonsData, exercisesData, testsData] = await Promise.all([
-            fetch(`http://localhost:3001/api/lessons?subject_id=${matchedSubject.id}`).then(res => res.json()),
-            fetch(`http://localhost:3001/api/exercises?subject_id=${matchedSubject.id}`).then(res => res.json()),
-            fetch(`http://localhost:3001/api/tests?subject_id=${matchedSubject.id}`).then(res => res.json()),
+          // Fetch lessons, exercises, tests, and soft books for this subject
+          const [lessonsData, exercisesData, testsData, softBooksData] = await Promise.all([
+            fetch(`http://localhost:5931/api/lessons?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/exercises?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/tests?subject_id=${matchedSubject.id}`).then(res => res.json()),
+            fetch(`http://localhost:5931/api/soft-books?subject_id=${matchedSubject.id}`).then(res => res.json()),
           ]);
           setLessons(lessonsData);
           setExercises(exercisesData);
           setTests(testsData);
+          setSoftBooks(softBooksData);
         }
       } catch (error) {
         console.error('Failed to fetch subject data:', error);
@@ -169,7 +181,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     <div className="relative h-48 overflow-hidden">
                       {lesson.thumbnail ? (
                         <img 
-                          src={lesson.thumbnail.startsWith('http') ? lesson.thumbnail : `http://localhost:3001${lesson.thumbnail}`} 
+                          src={lesson.thumbnail.startsWith('http') ? lesson.thumbnail : `http://localhost:5931${lesson.thumbnail}`} 
                           alt={lesson.title} 
                           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                         />
@@ -277,7 +289,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         </div>
                         {exercise.file_url && (
                           <a
-                            href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:3001${exercise.file_url}`}
+                            href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:5931${exercise.file_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
@@ -290,7 +302,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     </div>
                     {exercise.file_url ? (
                       <a
-                        href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:3001${exercise.file_url}`}
+                        href={exercise.file_url.startsWith('http') ? exercise.file_url : `http://localhost:5931${exercise.file_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:opacity-90"
@@ -343,7 +355,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         </div>
                         {test.file_url && (
                           <a
-                            href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:3001${test.file_url}`}
+                            href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:5931${test.file_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
@@ -356,7 +368,7 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                     </div>
                     {test.file_url ? (
                       <a
-                        href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:3001${test.file_url}`}
+                        href={test.file_url.startsWith('http') ? test.file_url : `http://localhost:5931${test.file_url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-2 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:opacity-90"
@@ -369,6 +381,61 @@ export default function SubjectDetail({ subjectId }: { subjectId: string }) {
                         Làm bài
                       </button>
                     )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {activeTab === 'sach-mem' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {softBooks.length === 0 ? (
+                <div className="col-span-full bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+                  <i className="ri-book-2-line text-4xl text-gray-300 mb-4"></i>
+                  <p className="text-gray-500">Chưa có sách mềm nào</p>
+                </div>
+              ) : (
+                softBooks.map((softBook) => (
+                  <div key={softBook.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group cursor-pointer">
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+                      {softBook.cover_image ? (
+                        <img
+                          src={softBook.cover_image.startsWith('http') ? softBook.cover_image : `http://localhost:5931${softBook.cover_image}`}
+                          alt={softBook.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <i className="ri-book-2-line text-6xl text-blue-200"></i>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                        <a
+                          href={softBook.file_url.startsWith('http') ? softBook.file_url : `http://localhost:5931${softBook.file_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-white text-gray-900 text-sm font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer hover:bg-gray-100"
+                        >
+                          Tải sách
+                        </a>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-semibold text-gray-800 mb-1">{softBook.title}</h4>
+                      {softBook.author && (
+                        <p className="text-xs text-gray-500 mb-2">Tác giả: {softBook.author}</p>
+                      )}
+                      {softBook.description && (
+                        <p className="text-xs text-gray-400 line-clamp-2 mb-3">{softBook.description}</p>
+                      )}
+                      <a
+                        href={softBook.file_url.startsWith('http') ? softBook.file_url : `http://localhost:5931${softBook.file_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        <i className="ri-download-line"></i>
+                        Tải file
+                      </a>
+                    </div>
                   </div>
                 ))
               )}

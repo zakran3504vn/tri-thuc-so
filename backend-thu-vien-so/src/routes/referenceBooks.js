@@ -43,6 +43,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Lấy sách nổi bật (featured)
+router.get('/featured', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM reference_books WHERE is_active = true AND is_featured = true ORDER BY created_at DESC LIMIT 6'
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Lỗi khi lấy sách nổi bật:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
 // Lấy sách tham khảo theo ID
 router.get('/:id', async (req, res) => {
   try {
@@ -63,15 +76,15 @@ router.get('/:id', async (req, res) => {
 // Tạo sách tham khảo mới
 router.post('/', async (req, res) => {
   try {
-    const { title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image } = req.body;
+    const { title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_featured } = req.body;
 
     if (!title || !file_url) {
       return res.status(400).json({ error: 'Thiếu title hoặc file_url' });
     }
 
     const [result] = await pool.query(
-      'INSERT INTO reference_books (title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, author || null, description || null, category || null, subject_id || null, grade || null, number_of_pages || null, file_url, file_type || null, file_size || null, cover_image || null]
+      'INSERT INTO reference_books (title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, author || null, description || null, category || null, subject_id || null, grade || null, number_of_pages || null, file_url, file_type || null, file_size || null, cover_image || null, is_featured || false]
     );
 
     const [newBook] = await pool.query('SELECT * FROM reference_books WHERE id = ?', [result.insertId]);
@@ -86,11 +99,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_active } = req.body;
+    const { title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_active, is_featured } = req.body;
 
     const [result] = await pool.query(
-      'UPDATE reference_books SET title = ?, author = ?, description = ?, category = ?, subject_id = ?, grade = ?, number_of_pages = ?, file_url = ?, file_type = ?, file_size = ?, cover_image = ?, is_active = ? WHERE id = ?',
-      [title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_active, id]
+      'UPDATE reference_books SET title = ?, author = ?, description = ?, category = ?, subject_id = ?, grade = ?, number_of_pages = ?, file_url = ?, file_type = ?, file_size = ?, cover_image = ?, is_active = ?, is_featured = ? WHERE id = ?',
+      [title, author, description, category, subject_id, grade, number_of_pages, file_url, file_type, file_size, cover_image, is_active, is_featured, id]
     );
 
     if (result.affectedRows === 0) {

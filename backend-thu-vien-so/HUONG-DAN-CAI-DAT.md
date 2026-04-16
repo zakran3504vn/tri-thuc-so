@@ -18,7 +18,7 @@ cp .env.example .env
 
 Chỉnh sửa file `.env` với thông tin MySQL của bạn:
 ```
-PORT=3001
+PORT=5931
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
@@ -48,7 +48,7 @@ npm run dev
 npm start
 ```
 
-Backend sẽ chạy tại: `http://localhost:3001`
+Backend sẽ chạy tại: `http://localhost:5931`
 
 ## Chạy Frontend
 
@@ -65,28 +65,28 @@ npm install
 npm run dev
 ```
 
-Frontend sẽ chạy tại: `http://localhost:3000`
+Frontend sẽ chạy tại: `http://localhost:5930`
 
 ## Kiểm tra API
 
 ### Health Check
 ```bash
-curl http://localhost:3001/api/health
+curl http://localhost:5931/api/health
 ```
 
 ### Lấy danh sách truyện
 ```bash
-curl http://localhost:3001/api/stories
+curl http://localhost:5931/api/stories
 ```
 
 ### Lấy chi tiết truyện
 ```bash
-curl http://localhost:3001/api/stories/1
+curl http://localhost:5931/api/stories/1
 ```
 
 ### Lấy trang của truyện
 ```bash
-curl http://localhost:3001/api/pages/story/1
+curl http://localhost:5931/api/pages/story/1
 ```
 
 ## Cấu trúc Backend

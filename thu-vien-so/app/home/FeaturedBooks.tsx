@@ -1,7 +1,9 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getFeaturedBooks, ReferenceBook } from '@/lib/api';
 
-const books = [
+const defaultBooks = [
   { title: 'Dế Mèn Phiêu Lưu Ký', author: 'Tô Hoài', type: 'Truyện đọc', img: 'https://readdy.ai/api/search-image?query=Vietnamese%20children%20story%20book%20cover%20cricket%20adventure%20colorful%20illustration%20warm%20background%20simple%20clean&width=200&height=280&seq=book001&orientation=portrait', href: '/truyen-doc' },
   { title: 'Toán Nâng Cao Lớp 5', author: 'NXB Giáo Dục', type: 'Sách tham khảo', img: 'https://readdy.ai/api/search-image?query=mathematics%20textbook%20cover%20grade%205%20blue%20clean%20modern%20design%20numbers%20geometric%20shapes%20simple&width=200&height=280&seq=book002&orientation=portrait', href: '/sach-tham-khao' },
   { title: 'Cô Bé Bán Diêm', author: 'H.C. Andersen', type: 'Truyện đọc', img: 'https://readdy.ai/api/search-image?query=fairy%20tale%20book%20cover%20little%20match%20girl%20illustration%20warm%20golden%20light%20snow%20winter%20simple%20clean&width=200&height=280&seq=book003&orientation=portrait', href: '/truyen-doc' },
@@ -10,6 +12,31 @@ const books = [
 ];
 
 export default function FeaturedBooks() {
+  const [books, setBooks] = useState<ReferenceBook[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const data = await getFeaturedBooks();
+        setBooks(data);
+      } catch (error) {
+        console.error('Failed to fetch featured books:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  const displayBooks = books.length > 0 ? books.map(book => ({
+    title: book.title,
+    author: book.author || '',
+    type: book.category || 'Sách tham khảo',
+    img: book.cover_image || '',
+    href: '/sach-tham-khao'
+  })) : defaultBooks;
+
   return (
     <section className="py-20 bg-gradient-to-b from-blue-50/50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,23 +50,29 @@ export default function FeaturedBooks() {
           </Link>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-          {books.map((book) => (
-            <Link key={book.title} href={book.href} className="flex-shrink-0 w-44 group cursor-pointer block">
-              <div className="relative overflow-hidden rounded-xl shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                <img src={book.img} alt={book.title} className="w-full h-60 object-cover object-top" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                  <span className="text-white text-xs font-semibold">Đọc ngay</span>
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Đang tải...</div>
+        ) : displayBooks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Chưa có sách nổi bật nào</div>
+        ) : (
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+            {displayBooks.map((book, index) => (
+              <Link key={book.title} href={book.href} className="flex-shrink-0 w-44 group cursor-pointer block">
+                <div className="relative overflow-hidden rounded-xl shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
+                  <img src={book.img} alt={book.title} className="w-full h-60 object-cover object-top" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                    <span className="text-white text-xs font-semibold">Đọc ngay</span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 px-1">
-                <span className="text-xs text-blue-600 font-medium">{book.type}</span>
-                <h4 className="font-semibold text-gray-800 text-sm mt-0.5 line-clamp-2 leading-snug">{book.title}</h4>
-                <p className="text-xs text-gray-400 mt-1">{book.author}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="mt-3 px-1">
+                  <span className="text-xs text-blue-600 font-medium">{book.type}</span>
+                  <h4 className="font-semibold text-gray-800 text-sm mt-0.5 line-clamp-2 leading-snug">{book.title}</h4>
+                  <p className="text-xs text-gray-400 mt-1">{book.author}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

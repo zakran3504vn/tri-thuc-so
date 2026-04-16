@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getSubjects,
   createSubject,
@@ -17,15 +17,20 @@ import {
   createTest,
   updateTest,
   deleteTest,
+  getSoftBooks,
+  createSoftBook,
+  updateSoftBook,
+  deleteSoftBook,
   uploadImage,
   Subject,
   Lesson,
   Exercise,
-  Test
+  Test,
+  SoftBook
 } from '@/lib/api';
 
 export default function AdminSubjects() {
-  const [activeTab, setActiveTab] = useState<'subjects' | 'lessons' | 'exercises' | 'tests'>('subjects');
+  const [activeTab, setActiveTab] = useState<'subjects' | 'lessons' | 'exercises' | 'tests' | 'soft-books'>('subjects');
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
 
   // Subjects state
@@ -34,6 +39,7 @@ export default function AdminSubjects() {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [subjectForm, setSubjectForm] = useState({
     title: '',
+    slug: '',
     description: '',
     grade_level: '',
     thumbnail: ''
@@ -90,8 +96,71 @@ export default function AdminSubjects() {
   });
   const [testFile, setTestFile] = useState<File | null>(null);
 
+  // Soft books state
+  const [softBooks, setSoftBooks] = useState<SoftBook[]>([]);
+  const [showSoftBookForm, setShowSoftBookForm] = useState(false);
+  const [editingSoftBook, setEditingSoftBook] = useState<SoftBook | null>(null);
+  const [softBookForm, setSoftBookForm] = useState({
+    subject_id: 0,
+    title: '',
+    author: '',
+    description: '',
+    file_url: '',
+    file_type: '',
+    file_size: undefined as number | undefined,
+    cover_image: '',
+    order_index: 0
+  });
+  const [softBookFile, setSoftBookFile] = useState<File | null>(null);
+  const [softBookCoverFile, setSoftBookCoverFile] = useState<File | null>(null);
+
   useEffect(() => {
     fetchSubjects();
+  }, []);
+
+  const fetchSubjects = useCallback(async () => {
+    try {
+      const data = await getSubjects();
+      setSubjects(data);
+    } catch (error) {
+      console.error('Failed to fetch subjects:', error);
+    }
+  }, []);
+
+  const fetchLessons = useCallback(async (subjectId: number) => {
+    try {
+      const data = await getLessons(subjectId.toString());
+      setLessons(data);
+    } catch (error) {
+      console.error('Failed to fetch lessons:', error);
+    }
+  }, []);
+
+  const fetchExercises = useCallback(async (subjectId: number) => {
+    try {
+      const data = await getExercises(subjectId.toString());
+      setExercises(data);
+    } catch (error) {
+      console.error('Failed to fetch exercises:', error);
+    }
+  }, []);
+
+  const fetchTests = useCallback(async (subjectId: number) => {
+    try {
+      const data = await getTests(subjectId.toString());
+      setTests(data);
+    } catch (error) {
+      console.error('Failed to fetch tests:', error);
+    }
+  }, []);
+
+  const fetchSoftBooks = useCallback(async (subjectId: number) => {
+    try {
+      const data = await getSoftBooks(subjectId);
+      setSoftBooks(data);
+    } catch (error) {
+      console.error('Failed to fetch soft books:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -99,44 +168,9 @@ export default function AdminSubjects() {
       if (activeTab === 'lessons') fetchLessons(selectedSubjectId);
       if (activeTab === 'exercises') fetchExercises(selectedSubjectId);
       if (activeTab === 'tests') fetchTests(selectedSubjectId);
+      if (activeTab === 'soft-books') fetchSoftBooks(selectedSubjectId);
     }
-  }, [selectedSubjectId, activeTab]);
-
-  const fetchSubjects = async () => {
-    try {
-      const data = await getSubjects();
-      setSubjects(data);
-    } catch (error) {
-      console.error('Failed to fetch subjects:', error);
-    }
-  };
-
-  const fetchLessons = async (subjectId: number) => {
-    try {
-      const data = await getLessons(subjectId.toString());
-      setLessons(data);
-    } catch (error) {
-      console.error('Failed to fetch lessons:', error);
-    }
-  };
-
-  const fetchExercises = async (subjectId: number) => {
-    try {
-      const data = await getExercises(subjectId.toString());
-      setExercises(data);
-    } catch (error) {
-      console.error('Failed to fetch exercises:', error);
-    }
-  };
-
-  const fetchTests = async (subjectId: number) => {
-    try {
-      const data = await getTests(subjectId.toString());
-      setTests(data);
-    } catch (error) {
-      console.error('Failed to fetch tests:', error);
-    }
-  };
+  }, [selectedSubjectId, activeTab, fetchLessons, fetchExercises, fetchTests, fetchSoftBooks]);
 
   const handleSubjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +181,7 @@ export default function AdminSubjects() {
       if (subjectImageFile) {
         const formData = new FormData();
         formData.append('image', subjectImageFile);
-        const uploadResponse = await fetch('http://localhost:3001/api/upload', {
+        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -164,7 +198,7 @@ export default function AdminSubjects() {
       }
       setShowSubjectForm(false);
       setEditingSubject(null);
-      setSubjectForm({ title: '', description: '', grade_level: '', thumbnail: '' });
+      setSubjectForm({ title: '', slug: '', description: '', grade_level: '', thumbnail: '' });
       setSubjectImageFile(null);
       setSubjectImagePreview('');
       fetchSubjects();
@@ -183,7 +217,7 @@ export default function AdminSubjects() {
       if (lessonVideoFile) {
         const formData = new FormData();
         formData.append('video', lessonVideoFile);
-        const uploadResponse = await fetch('http://localhost:3001/api/upload-video', {
+        const uploadResponse = await fetch('http://localhost:5931/api/upload-video', {
           method: 'POST',
           body: formData,
         });
@@ -197,7 +231,7 @@ export default function AdminSubjects() {
       if (lessonThumbnailFile) {
         const formData = new FormData();
         formData.append('image', lessonThumbnailFile);
-        const uploadResponse = await fetch('http://localhost:3001/api/upload', {
+        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -233,7 +267,7 @@ export default function AdminSubjects() {
       if (exerciseFile) {
         const formData = new FormData();
         formData.append('file', exerciseFile);
-        const uploadResponse = await fetch('http://localhost:3001/api/upload-exercise', {
+        const uploadResponse = await fetch('http://localhost:5931/api/upload-exercise', {
           method: 'POST',
           body: formData,
         });
@@ -267,7 +301,7 @@ export default function AdminSubjects() {
       if (testFile) {
         const formData = new FormData();
         formData.append('file', testFile);
-        const uploadResponse = await fetch('http://localhost:3001/api/upload-test', {
+        const uploadResponse = await fetch('http://localhost:5931/api/upload-test', {
           method: 'POST',
           body: formData,
         });
@@ -292,6 +326,56 @@ export default function AdminSubjects() {
     }
   };
 
+  const handleSoftBookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      let fileUrl = softBookForm.file_url;
+      let coverImage = softBookForm.cover_image;
+
+      // Upload file if a new file is selected
+      if (softBookFile) {
+        const formData = new FormData();
+        formData.append('file', softBookFile);
+        const uploadResponse = await fetch('http://localhost:5931/api/upload-soft-book', {
+          method: 'POST',
+          body: formData,
+        });
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          fileUrl = uploadData.fileUrl;
+        }
+      }
+
+      // Upload cover image if a new file is selected
+      if (softBookCoverFile) {
+        const formData = new FormData();
+        formData.append('image', softBookCoverFile);
+        const uploadResponse = await fetch('http://localhost:5931/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          coverImage = uploadData.imageUrl;
+        }
+      }
+
+      if (editingSoftBook) {
+        await updateSoftBook(editingSoftBook.id, { ...softBookForm, file_url: fileUrl, cover_image: coverImage, is_active: editingSoftBook.is_active });
+      } else {
+        await createSoftBook({ ...softBookForm, file_url: fileUrl, cover_image: coverImage, is_active: true });
+      }
+      setShowSoftBookForm(false);
+      setEditingSoftBook(null);
+      setSoftBookForm({ subject_id: 0, title: '', author: '', description: '', file_url: '', file_type: '', file_size: undefined, cover_image: '', order_index: 0 });
+      setSoftBookFile(null);
+      setSoftBookCoverFile(null);
+      if (selectedSubjectId) fetchSoftBooks(selectedSubjectId);
+    } catch (error) {
+      console.error('Failed to save soft book:', error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-6">
@@ -300,7 +384,7 @@ export default function AdminSubjects() {
           <button
             onClick={() => {
               setEditingSubject(null);
-              setSubjectForm({ title: '', description: '', grade_level: '', thumbnail: '' });
+              setSubjectForm({ title: '', slug: '', description: '', grade_level: '', thumbnail: '' });
               setSubjectImageFile(null);
               setSubjectImagePreview('');
               setShowSubjectForm(true);
@@ -339,6 +423,12 @@ export default function AdminSubjects() {
         >
           Đề kiểm tra
         </button>
+        <button
+          onClick={() => setActiveTab('soft-books')}
+          className={`px-4 py-2 text-sm font-semibold cursor-pointer ${activeTab === 'soft-books' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Sách mềm
+        </button>
       </div>
 
       {/* Subjects Tab */}
@@ -357,6 +447,17 @@ export default function AdminSubjects() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug (tự động tạo từ tên)</label>
+                  <input
+                    type="text"
+                    value={subjectForm.slug}
+                    onChange={e => setSubjectForm({ ...subjectForm, slug: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    placeholder="Ví dụ: toan-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Slug sẽ được dùng trong URL. Nếu để trống sẽ tự động tạo từ tên môn học.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
@@ -380,8 +481,8 @@ export default function AdminSubjects() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh bìa</label>
                   <div className="space-y-2">
                     {subjectImagePreview && (
-                      <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-200">
-                        <img src={subjectImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+                        <img src={subjectImagePreview} alt="Preview" className="w-full h-full object-contain" />
                         <button
                           type="button"
                           onClick={() => {
@@ -418,7 +519,7 @@ export default function AdminSubjects() {
                     onClick={() => {
                       setShowSubjectForm(false);
                       setEditingSubject(null);
-                      setSubjectForm({ title: '', description: '', grade_level: '', thumbnail: '' });
+                      setSubjectForm({ title: '', slug: '', description: '', grade_level: '', thumbnail: '' });
                       setSubjectImageFile(null);
                       setSubjectImagePreview('');
                     }}
@@ -444,7 +545,7 @@ export default function AdminSubjects() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     {subject.thumbnail && (
-                      <img src={subject.thumbnail.startsWith('http') ? subject.thumbnail : `http://localhost:3001${subject.thumbnail}`} alt={subject.title} className="w-10 h-10 rounded-xl object-cover" />
+                      <img src={subject.thumbnail.startsWith('http') ? subject.thumbnail : `http://localhost:5931${subject.thumbnail}`} alt={subject.title} className="w-10 h-10 rounded-xl object-cover" />
                     )}
                     {!subject.thumbnail && (
                       <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
@@ -454,6 +555,7 @@ export default function AdminSubjects() {
                     <span className="font-bold text-gray-800">{subject.title}</span>
                   </div>
                 </div>
+                <div className="text-xs text-gray-500 mb-1">Slug: <span className="font-mono bg-gray-100 px-1 rounded">{subject.slug}</span></div>
                 {subject.grade_level && (
                   <div className="text-xs text-gray-500 mb-3">{subject.grade_level}</div>
                 )}
@@ -466,11 +568,12 @@ export default function AdminSubjects() {
                       setEditingSubject(subject);
                       setSubjectForm({
                         title: subject.title,
+                        slug: subject.slug,
                         description: subject.description || '',
                         grade_level: subject.grade_level || '',
                         thumbnail: subject.thumbnail || ''
                       });
-                      setSubjectImagePreview(subject.thumbnail && subject.thumbnail.startsWith('http') ? subject.thumbnail : subject.thumbnail ? `http://localhost:3001${subject.thumbnail}` : '');
+                      setSubjectImagePreview(subject.thumbnail && subject.thumbnail.startsWith('http') ? subject.thumbnail : subject.thumbnail ? `http://localhost:5931${subject.thumbnail}` : '');
                       setShowSubjectForm(true);
                     }}
                     className="flex-1 py-1.5 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg hover:bg-blue-100 cursor-pointer whitespace-nowrap"
@@ -620,7 +723,7 @@ export default function AdminSubjects() {
                         onClick={() => {
                           setShowLessonForm(false);
                           setEditingLesson(null);
-                          setLessonForm({ subject_id: 0, title: '', description: '', content: '', video_url: '', week_number: null, order_index: 0, thumbnail: '' });
+                          setLessonForm({ subject_id: 0, title: '', description: '', content: '', video_url: '', week_number: undefined, order_index: 0, thumbnail: '' });
                           setLessonVideoFile(null);
                           setLessonThumbnailFile(null);
                           setLessonThumbnailPreview('');
@@ -678,7 +781,7 @@ export default function AdminSubjects() {
                               order_index: lesson.order_index,
                               thumbnail: lesson.thumbnail || ''
                             });
-                            setLessonThumbnailPreview(lesson.thumbnail && lesson.thumbnail.startsWith('http') ? lesson.thumbnail : lesson.thumbnail ? `http://localhost:3001${lesson.thumbnail}` : '');
+                            setLessonThumbnailPreview(lesson.thumbnail && lesson.thumbnail.startsWith('http') ? lesson.thumbnail : lesson.thumbnail ? `http://localhost:5931${lesson.thumbnail}` : '');
                             setShowLessonForm(true);
                           }}
                           className="px-3 py-1.5 bg-yellow-50 text-yellow-600 text-xs font-semibold rounded-lg hover:bg-yellow-100 cursor-pointer"
@@ -1036,6 +1139,178 @@ export default function AdminSubjects() {
                           onClick={() => {
                             if (confirm('Bạn có chắc chắn muốn xóa đề kiểm tra này?')) {
                               deleteTest(test.id).then(() => fetchTests(selectedSubjectId));
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-red-50 text-red-500 text-xs font-semibold rounded-lg hover:bg-red-100 cursor-pointer"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Soft Books Tab */}
+      {activeTab === 'soft-books' && (
+        <>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Chọn môn học</label>
+            <select
+              value={selectedSubjectId || ''}
+              onChange={e => setSelectedSubjectId(Number(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Chọn môn học</option>
+              {subjects.map(s => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedSubjectId && (
+            <>
+              {showSoftBookForm && (
+                <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+                  <h4 className="font-bold text-gray-900 mb-4">{editingSoftBook ? 'Cập nhật sách mềm' : 'Thêm sách mềm mới'}</h4>
+                  <form onSubmit={handleSoftBookSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
+                      <input
+                        type="text"
+                        value={softBookForm.title}
+                        onChange={e => setSoftBookForm({ ...softBookForm, title: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tác giả</label>
+                      <input
+                        type="text"
+                        value={softBookForm.author}
+                        onChange={e => setSoftBookForm({ ...softBookForm, author: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                      <textarea
+                        value={softBookForm.description}
+                        onChange={e => setSoftBookForm({ ...softBookForm, description: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      ></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Upload file sách mềm *</label>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.epub"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSoftBookFile(file);
+                          }
+                        }}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {softBookForm.file_url && (
+                        <p className="text-xs text-gray-500 mt-1">File hiện tại: {softBookForm.file_url.split('/').pop()}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Upload ảnh bìa</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSoftBookCoverFile(file);
+                          }
+                        }}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 cursor-pointer">
+                        {editingSoftBook ? 'Cập nhật' : 'Thêm'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSoftBookForm(false);
+                          setEditingSoftBook(null);
+                          setSoftBookForm({ subject_id: 0, title: '', author: '', description: '', file_url: '', file_type: '', file_size: undefined, cover_image: '', order_index: 0 });
+                          setSoftBookFile(null);
+                          setSoftBookCoverFile(null);
+                        }}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 cursor-pointer"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setEditingSoftBook(null);
+                  setSoftBookForm({ subject_id: selectedSubjectId, title: '', author: '', description: '', file_url: '', file_type: '', file_size: undefined, cover_image: '', order_index: 0 });
+                  setSoftBookFile(null);
+                  setSoftBookCoverFile(null);
+                  setShowSoftBookForm(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors cursor-pointer mb-6"
+              >
+                <span className="w-4 h-4 flex items-center justify-center"><i className="ri-add-line"></i></span>
+                Thêm sách mềm
+              </button>
+
+              <div className="space-y-3">
+                {softBooks.map((softBook) => (
+                  <div key={softBook.id} className="border border-gray-100 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{softBook.title}</h4>
+                        {softBook.author && (
+                          <p className="text-xs text-gray-400 mt-1">Tác giả: {softBook.author}</p>
+                        )}
+                        {softBook.description && (
+                          <p className="text-xs text-gray-400 mt-1">{softBook.description}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingSoftBook(softBook);
+                            setSoftBookForm({
+                              subject_id: softBook.subject_id,
+                              title: softBook.title,
+                              author: softBook.author || '',
+                              description: softBook.description || '',
+                              file_url: softBook.file_url,
+                              file_type: softBook.file_type || '',
+                              file_size: softBook.file_size,
+                              cover_image: softBook.cover_image || '',
+                              order_index: softBook.order_index
+                            });
+                            setShowSoftBookForm(true);
+                          }}
+                          className="px-3 py-1.5 bg-yellow-50 text-yellow-600 text-xs font-semibold rounded-lg hover:bg-yellow-100 cursor-pointer"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Bạn có chắc chắn muốn xóa sách mềm này?')) {
+                              deleteSoftBook(softBook.id).then(() => fetchSoftBooks(selectedSubjectId));
                             }
                           }}
                           className="px-3 py-1.5 bg-red-50 text-red-500 text-xs font-semibold rounded-lg hover:bg-red-100 cursor-pointer"

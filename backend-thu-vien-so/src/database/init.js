@@ -91,6 +91,7 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS subjects (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         grade_level VARCHAR(50),
         teacher_id INT,
@@ -101,6 +102,18 @@ async function initDatabase() {
         FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+
+    // Add slug column if it doesn't exist
+    try {
+      await connection.query(`
+        ALTER TABLE subjects
+        ADD COLUMN slug VARCHAR(255) NOT NULL UNIQUE AFTER title
+      `);
+      console.log('Đã thêm cột slug vào bảng subjects');
+    } catch (error) {
+      // Column already exists, ignore error
+      console.log('Cột slug đã tồn tại trong bảng subjects');
+    }
 
     console.log('Đang tạo bảng bài giảng (lessons)...');
     await connection.query(`
@@ -195,13 +208,28 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    console.log('Đang tạo bảng danh mục thông báo...');
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS categories_announcements (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        color VARCHAR(20) DEFAULT 'blue',
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     console.log('Đang tạo bảng thông báo...');
     await connection.query(`
       CREATE TABLE IF NOT EXISTS announcements (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
         content TEXT NOT NULL,
-        announcement_type ENUM('general', 'urgent', 'event') DEFAULT 'general',
+        category_id INT,
         priority INT DEFAULT 0,
         publish_date DATETIME,
         expiry_date DATETIME,
@@ -210,7 +238,37 @@ async function initDatabase() {
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (category_id) REFERENCES categories_announcements(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    console.log('Đang tạo bảng banners...');
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS banners (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        image_url TEXT NOT NULL,
+        link_url VARCHAR(255) DEFAULT '/mon-hoc',
+        order_index INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    console.log('Đang tạo bảng stats...');
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS stats (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        label VARCHAR(100) NOT NULL,
+        value VARCHAR(50) NOT NULL,
+        icon VARCHAR(50) DEFAULT 'ri-star-line',
+        order_index INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
@@ -242,6 +300,29 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Thêm cột slug nếu chưa tồn tại
+    try {
+      await connection.query(`
+        ALTER TABLE announcements ADD COLUMN slug VARCHAR(255) NOT NULL UNIQUE AFTER title
+      `);
+      console.log('Đã thêm cột slug vào bảng announcements');
+    } catch (error) {
+      console.log('Cột slug đã tồn tại hoặc không thể thêm');
+    }
+
+    // Thêm cột category_id nếu chưa tồn tại
+    try {
+      await connection.query(`
+        ALTER TABLE announcements ADD COLUMN category_id INT AFTER announcement_type
+      `);
+      await connection.query(`
+        ALTER TABLE announcements ADD FOREIGN KEY (category_id) REFERENCES categories_announcements(id) ON DELETE SET NULL
+      `);
+      console.log('Đã thêm cột category_id vào bảng announcements');
+    } catch (error) {
+      console.log('Cột category_id đã tồn tại hoặc không thể thêm');
+    }
+
     // Thêm cột image_url nếu bảng đã tồn tại nhưng chưa có cột này
     try {
       await connection.query(`
@@ -251,6 +332,21 @@ async function initDatabase() {
     } catch (error) {
       // Cột có thể đã tồn tại, bỏ qua lỗi
       console.log('Cột image_url đã tồn tại hoặc không thể thêm');
+    }
+
+    // Insert default categories if not exist
+    try {
+      await connection.query(`
+        INSERT IGNORE INTO categories_announcements (id, name, slug, color, description) VALUES
+        (1, 'Thông báo chung', 'thong-bao-chung', 'blue', 'Các thông báo chung của nhà trường'),
+        (2, 'Khẩn cấp', 'khan-cap', 'red', 'Thông báo khẩn cấp, cần chú ý ngay'),
+        (3, 'Sự kiện', 'su-kien', 'green', 'Thông tin về các sự kiện sắp diễn ra'),
+        (4, 'Học tập', 'hoc-tap', 'purple', 'Thông báo liên quan đến học tập'),
+        (5, 'Hoạt động', 'hoat-dong', 'orange', 'Thông tin về hoạt động ngoại khóa')
+      `);
+      console.log('Đã thêm danh mục thông báo mặc định');
+    } catch (error) {
+      console.log('Danh mục thông báo đã tồn tại hoặc không thể thêm');
     }
 
     // Thêm các cột mới vào bảng reference_books nếu chưa tồn tại
@@ -326,6 +422,7 @@ async function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         subject_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         file_url TEXT,
         duration INT COMMENT 'Thời gian làm bài tính bằng phút',
@@ -339,6 +436,18 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Add slug column if it doesn't exist
+    try {
+      await connection.query(`
+        ALTER TABLE tests
+        ADD COLUMN slug VARCHAR(255) NOT NULL UNIQUE AFTER title
+      `);
+      console.log('Đã thêm cột slug vào bảng tests');
+    } catch (error) {
+      // Column already exists, ignore error
+      console.log('Cột slug đã tồn tại trong bảng tests');
+    }
+
     // Add file_url column if it doesn't exist
     try {
       await connection.query(`
@@ -349,6 +458,39 @@ async function initDatabase() {
     } catch (error) {
       // Column already exists, ignore error
       console.log('Cột file_url đã tồn tại trong bảng tests');
+    }
+
+    console.log('Đang tạo bảng sách mềm (soft_books)...');
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS soft_books (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        subject_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        author VARCHAR(255),
+        description TEXT,
+        file_url TEXT NOT NULL,
+        file_type VARCHAR(50),
+        file_size INT,
+        cover_image TEXT,
+        order_index INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Add slug column if it doesn't exist
+    try {
+      await connection.query(`
+        ALTER TABLE soft_books
+        ADD COLUMN slug VARCHAR(255) NOT NULL UNIQUE AFTER title
+      `);
+      console.log('Đã thêm cột slug vào bảng soft_books');
+    } catch (error) {
+      // Column already exists, ignore error
+      console.log('Cột slug đã tồn tại trong bảng soft_books');
     }
 
     console.log('Đang tạo dữ liệu mẫu...');
@@ -480,24 +622,42 @@ async function initDatabase() {
       ON DUPLICATE KEY UPDATE title=VALUES(title)
     `);
 
+    // Insert sample banners
+    console.log('Đang thêm dữ liệu mẫu banners...');
+    await connection.query(`
+      INSERT IGNORE INTO banners (title, description, image_url, link_url, order_index, is_active) VALUES
+      ('Thư Viện Số', 'Tri Thức Không Giới Hạn', 'https://readdy.ai/api/search-image?query=beautiful%20modern%20digital%20library%20education%20platform%20with%20glowing%20blue%20and%20green%20gradient%20background%2C%20floating%20books%2C%20soft%20light%20rays%2C%20knowledge%20concept%2C%20clean%20minimalist%20aesthetic%2C%20Vietnamese%20school%20children%20reading%2C%20warm%20inviting%20atmosphere%2C%20bokeh%20background%2C%20high%20quality%20photography&width=1440&height=900&seq=hero001&orientation=landscape', '/mon-hoc', 1, TRUE),
+      ('Khám Phá Môn Học', 'Hệ thống bài giảng đa dạng', 'https://readdy.ai/api/search-image?query=education%20classroom%20students%20learning%20colorful%20books%20laptops%20modern%20bright%20clean%20background%20blue%20green%20gradient&width=1440&height=900&seq=hero002&orientation=landscape', '/mon-hoc', 2, TRUE)
+    `);
+
+    // Insert sample stats
+    console.log('Đang thêm dữ liệu mẫu stats...');
+    await connection.query(`
+      INSERT IGNORE INTO stats (label, value, icon, order_index, is_active) VALUES
+      ('Bài giảng video', '1,200+', 'ri-book-2-line', 1, TRUE),
+      ('Học sinh đang học', '50,000+', 'ri-user-star-line', 2, TRUE),
+      ('Đầu sách & truyện', '500+', 'ri-file-text-line', 3, TRUE),
+      ('Giáo viên tham gia', '120+', 'ri-award-line', 4, TRUE)
+    `);
+
     // Insert sample announcements
     console.log('Đang thêm dữ liệu mẫu thông báo...');
     try {
       await connection.query(`
-        INSERT INTO announcements (title, content, announcement_type, priority, publish_date, image_url, created_by) VALUES
-        ('Thông báo nghỉ lễ', 'Nhà trường thông báo lịch nghỉ lễ 30/4 - 1/5. Các em học sinh nghỉ từ 29/4 đến 2/5. Học sinh quay trở lại trường vào ngày 3/5.', 'general', 1, '2024-04-20 08:00:00', 'https://readdy.ai/api/search-image?query=Vietnamese%20holiday%20celebration%20flag%20flowers%20festive%20warm%20colors%20clean%20background&width=600&height=380&seq=an001&orientation=landscape', 1),
-        ('Khẩn: Thay đổi lịch học', 'Do điều kiện thời tiết, nhà trường thông báo thay đổi lịch học ngày mai. Các lớp học trực tuyến thay vì học tại trường.', 'urgent', 3, '2024-04-15 17:00:00', 'https://readdy.ai/api/search-image?query=weather%20alert%20storm%20rain%20cloudy%20dark%20sky%20warning%20sign&width=600&height=380&seq=an002&orientation=landscape', 1),
-        ('Ngày hội Mẹ', 'Nhà trường tổ chức ngày hội Mẹ vào ngày 12/5. Mời phụ huynh và học sinh tham gia các hoạt động ý nghĩa.', 'event', 2, '2024-05-01 09:00:00', 'https://readdy.ai/api/search-image?query=mothers%20day%20celebration%20flowers%20family%20love%20warm%20colors%20happy%20children&width=600&height=380&seq=an003&orientation=landscape', 1)
+        INSERT INTO announcements (title, slug, content, category_id, priority, publish_date, image_url, created_by) VALUES
+        ('Thông báo nghỉ lễ', 'thong-bao-nghi-le', 'Nhà trường thông báo lịch nghỉ lễ 30/4 - 1/5. Các em học sinh nghỉ từ 29/4 đến 2/5. Học sinh quay trở lại trường vào ngày 3/5.', 1, 1, '2024-04-20 08:00:00', 'https://readdy.ai/api/search-image?query=Vietnamese%20holiday%20celebration%20flag%20flowers%20festive%20warm%20colors%20clean%20background&width=600&height=380&seq=an001&orientation=landscape', 1),
+        ('Khẩn: Thay đổi lịch học', 'khan-thay-doi-lich-hoc', 'Do điều kiện thời tiết, nhà trường thông báo thay đổi lịch học ngày mai. Các lớp học trực tuyến thay vì học tại trường.', 2, 3, '2024-04-15 17:00:00', 'https://readdy.ai/api/search-image?query=weather%20alert%20storm%20rain%20cloudy%20dark%20sky%20warning%20sign&width=600&height=380&seq=an002&orientation=landscape', 1),
+        ('Ngày hội Mẹ', 'ngay-hoi-me', 'Nhà trường tổ chức ngày hội Mẹ vào ngày 12/5. Mời phụ huynh và học sinh tham gia các hoạt động ý nghĩa.', 3, 2, '2024-05-01 09:00:00', 'https://readdy.ai/api/search-image?query=mothers%20day%20celebration%20flowers%20family%20love%20warm%20colors%20happy%20children&width=600&height=380&seq=an003&orientation=landscape', 1)
         ON DUPLICATE KEY UPDATE title=VALUES(title)
       `);
     } catch (error) {
-      // Nếu cột image_url chưa tồn tại, thử INSERT không có image_url
-      console.log('Thử INSERT không có image_url...');
+      // Nếu các cột mới chưa tồn tại, thử INSERT cơ bản
+      console.log('Thử INSERT với cấu trúc cơ bản...');
       await connection.query(`
-        INSERT IGNORE INTO announcements (title, content, announcement_type, priority, publish_date, created_by) VALUES
-        ('Thông báo nghỉ lễ', 'Nhà trường thông báo lịch nghỉ lễ 30/4 - 1/5. Các em học sinh nghỉ từ 29/4 đến 2/5. Học sinh quay trở lại trường vào ngày 3/5.', 'general', 1, '2024-04-20 08:00:00', 1),
-        ('Khẩn: Thay đổi lịch học', 'Do điều kiện thời tiết, nhà trường thông báo thay đổi lịch học ngày mai. Các lớp học trực tuyến thay vì học tại trường.', 'urgent', 3, '2024-04-15 17:00:00', 1),
-        ('Ngày hội Mẹ', 'Nhà trường tổ chức ngày hội Mẹ vào ngày 12/5. Mời phụ huynh và học sinh tham gia các hoạt động ý nghĩa.', 'event', 2, '2024-05-01 09:00:00', 1)
+        INSERT IGNORE INTO announcements (title, slug, content, category_id, priority, publish_date, created_by) VALUES
+        ('Thông báo nghỉ lễ', 'thong-bao-nghi-le', 'Nhà trường thông báo lịch nghỉ lễ 30/4 - 1/5. Các em học sinh nghỉ từ 29/4 đến 2/5. Học sinh quay trở lại trường vào ngày 3/5.', 1, 1, '2024-04-20 08:00:00', 1),
+        ('Khẩn: Thay đổi lịch học', 'khan-thay-doi-lich-hoc', 'Do điều kiện thời tiết, nhà trường thông báo thay đổi lịch học ngày mai. Các lớp học trực tuyến thay vì học tại trường.', 2, 3, '2024-04-15 17:00:00', 1),
+        ('Ngày hội Mẹ', 'ngay-hoi-me', 'Nhà trường tổ chức ngày hội Mẹ vào ngày 12/5. Mời phụ huynh và học sinh tham gia các hoạt động ý nghĩa.', 3, 2, '2024-05-01 09:00:00', 1)
       `);
     }
 

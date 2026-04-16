@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5931/api';
 
 export interface Story {
   id: number;
@@ -55,11 +55,23 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface AnnouncementCategory {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Announcement {
   id: number;
   title: string;
+  slug: string;
   content: string;
-  announcement_type: 'general' | 'urgent' | 'event';
+  category_id: number | null;
   priority: number;
   publish_date: string;
   expiry_date: string | null;
@@ -69,6 +81,9 @@ export interface Announcement {
   created_at: string;
   updated_at: string;
   created_by_name?: string;
+  category_name?: string;
+  category_color?: string;
+  category_slug?: string;
 }
 
 export interface ContactInfo {
@@ -107,6 +122,7 @@ export interface ReferenceBook {
   file_type: string | null;
   file_size: number | null;
   cover_image: string | null;
+  is_featured: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -279,6 +295,7 @@ export interface Test {
   id: number;
   subject_id: number;
   title: string;
+  slug: string;
   description?: string;
   file_url?: string;
   duration?: number;
@@ -366,13 +383,193 @@ export async function deleteTest(id: number, token?: string): Promise<void> {
   if (!response.ok) throw new Error('Failed to delete test');
 }
 
+// Soft Books API
+export interface SoftBook {
+  id: number;
+  subject_id: number;
+  title: string;
+  slug: string;
+  author?: string;
+  description?: string;
+  file_url: string;
+  file_type?: string;
+  file_size?: number;
+  cover_image?: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getSoftBooks(subjectId?: number, token?: string): Promise<SoftBook[]> {
+  const headers: HeadersInit = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const url = subjectId
+    ? `${API_BASE_URL}/soft-books?subject_id=${subjectId}`
+    : `${API_BASE_URL}/soft-books`;
+
+  const response = await fetch(url, { headers });
+  if (!response.ok) throw new Error('Failed to fetch soft books');
+  return response.json();
+}
+
+export async function getSoftBook(id: number, token?: string): Promise<SoftBook> {
+  const headers: HeadersInit = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/soft-books/${id}`, { headers });
+  if (!response.ok) throw new Error('Failed to fetch soft book');
+  return response.json();
+}
+
+export async function createSoftBook(data: {
+  subject_id: number;
+  title: string;
+  author?: string;
+  description?: string;
+  file_url: string;
+  file_type?: string;
+  file_size?: number;
+  cover_image?: string;
+  order_index?: number;
+  is_active?: boolean;
+}, token?: string): Promise<SoftBook> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/soft-books`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create soft book');
+  }
+  return response.json();
+}
+
+export async function updateSoftBook(id: number, data: {
+  subject_id?: number;
+  title?: string;
+  author?: string;
+  description?: string;
+  file_url?: string;
+  file_type?: string;
+  file_size?: number;
+  cover_image?: string;
+  order_index?: number;
+  is_active?: boolean;
+}, token?: string): Promise<SoftBook> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/soft-books/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update soft book');
+  }
+  return response.json();
+}
+
+export async function deleteSoftBook(id: number, token?: string): Promise<void> {
+  const headers: HeadersInit = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/soft-books/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) throw new Error('Failed to delete soft book');
+}
+
+// Homepage API
+export interface Banner {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+  link_url: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Stat {
+  id: number;
+  label: string;
+  value: string;
+  icon: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface News {
+  id: number;
+  category: string;
+  date: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  image_url: string;
+  is_highlighted: boolean;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getBanners(): Promise<Banner[]> {
+  const response = await fetch(`${API_BASE_URL}/banners`);
+  if (!response.ok) throw new Error('Failed to fetch banners');
+  return response.json();
+}
+
+export async function getStats(): Promise<Stat[]> {
+  const response = await fetch(`${API_BASE_URL}/stats`);
+  if (!response.ok) throw new Error('Failed to fetch stats');
+  return response.json();
+}
+
+export async function getNews(): Promise<News[]> {
+  const response = await fetch(`${API_BASE_URL}/news`);
+  if (!response.ok) throw new Error('Failed to fetch news');
+  return response.json();
+}
+
+export async function getHighlightedNews(): Promise<News[]> {
+  const response = await fetch(`${API_BASE_URL}/news/highlighted`);
+  if (!response.ok) throw new Error('Failed to fetch highlighted news');
+  return response.json();
+}
+
+export async function getFeaturedBooks(): Promise<ReferenceBook[]> {
+  const response = await fetch(`${API_BASE_URL}/reference-books/featured`);
+  if (!response.ok) throw new Error('Failed to fetch featured books');
+  return response.json();
+}
+
 // Subjects API
 export interface Subject {
   id: number;
   title: string;
+  slug: string;
   description?: string;
   grade_level?: string;
   teacher_id?: number;
+  teacher_name?: string;
   thumbnail?: string;
   is_active: boolean;
   created_at: string;
@@ -650,9 +847,10 @@ export async function getCurrentUser(token: string): Promise<User> {
 }
 
 // Announcements API
-export async function getAnnouncements(type?: string, includeInactive?: boolean): Promise<Announcement[]> {
+export async function getAnnouncements(type?: string, categoryId?: number, includeInactive?: boolean): Promise<Announcement[]> {
   const params = new URLSearchParams();
   if (type) params.append('type', type);
+  if (categoryId) params.append('category_id', categoryId.toString());
   if (includeInactive) params.append('include_inactive', 'true');
   
   const url = `${API_BASE_URL}/announcements${params.toString() ? '?' + params.toString() : ''}`;
@@ -667,10 +865,81 @@ export async function getAnnouncement(id: number): Promise<Announcement> {
   return response.json();
 }
 
+export async function getAnnouncementBySlug(slug: string): Promise<Announcement> {
+  const response = await fetch(`${API_BASE_URL}/announcements/slug/${slug}`);
+  if (!response.ok) throw new Error('Failed to fetch announcement');
+  return response.json();
+}
+
+// Announcement Categories API
+export async function getAnnouncementCategories(): Promise<AnnouncementCategory[]> {
+  const response = await fetch(`${API_BASE_URL}/announcements/categories`);
+  if (!response.ok) throw new Error('Failed to fetch announcement categories');
+  return response.json();
+}
+
+export async function getAnnouncementCategory(id: number): Promise<AnnouncementCategory> {
+  const response = await fetch(`${API_BASE_URL}/announcements/categories/${id}`);
+  if (!response.ok) throw new Error('Failed to fetch announcement category');
+  return response.json();
+}
+
+export async function createAnnouncementCategory(data: {
+  name: string;
+  slug?: string;
+  color?: string;
+  description?: string;
+}, token: string): Promise<AnnouncementCategory> {
+  const response = await fetch(`${API_BASE_URL}/announcements/categories`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create announcement category');
+  }
+  return response.json();
+}
+
+export async function updateAnnouncementCategory(id: number, data: {
+  name?: string;
+  slug?: string;
+  color?: string;
+  description?: string;
+  is_active?: boolean;
+}, token: string): Promise<AnnouncementCategory> {
+  const response = await fetch(`${API_BASE_URL}/announcements/categories/${id}`, {
+    method: 'PUT',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update announcement category');
+  }
+  return response.json();
+}
+
+export async function deleteAnnouncementCategory(id: number, token: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/announcements/categories/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Failed to delete announcement category');
+}
+
 export async function createAnnouncement(data: {
   title: string;
+  slug?: string;
   content: string;
-  announcement_type?: string;
+  category_id?: number;
   priority?: number;
   publish_date?: string;
   expiry_date?: string;
@@ -694,8 +963,9 @@ export async function createAnnouncement(data: {
 
 export async function updateAnnouncement(id: number, data: {
   title?: string;
+  slug?: string;
   content?: string;
-  announcement_type?: string;
+  category_id?: number;
   priority?: number;
   publish_date?: string;
   expiry_date?: string;
